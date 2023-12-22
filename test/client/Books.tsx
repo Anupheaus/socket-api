@@ -10,29 +10,35 @@ const useStyles = makeStyles()({
   },
 });
 
-const emptyBooks: Book[] = [{ id: 0, author: 'Loading...', title: 'Loading...' }];
+const emptyBooks: Book[] = [{ id: '1', authorId: '', title: '', price: 0.00 }];
 
 export const Books = () => {
   const { classes } = useStyles();
   const { books, error, isLoading, addBook } = useBooks();
 
+  // const isLoading = false;
+  // const books: Book[] = [];
+  // const error = null;
+
   const handleAddBook = useBound(() => addBook({
-    id: (books?.length ?? 1000) + 1,
-    author: 'New Author',
+    id: `${(books?.length ?? 1000) + 1}`,
+    authorId: '2',
     title: 'New Title',
+    price: 10.00,
   }));
 
   return (
     <Flex tagName="books" className={classes.books} width={300} gap={16}>
       <UIState isLoading={isLoading}>
-        {(books ?? emptyBooks).map(({ id, author, title }) => (
+        {(books ?? emptyBooks).map(({ id, authorId, title, price }) => (
           <Flex tagName="book" key={id} gap={16}>
-            <Skeleton type="text"><Flex tagName="author">{author}</Flex></Skeleton>
+            <Skeleton type="text"><Flex tagName="author" disableGrow>{authorId}</Flex></Skeleton>
             <Skeleton type="text"><Flex tagName="title">{title}</Flex></Skeleton>
+            <Skeleton type="text"><Flex tagName="price">{price}</Flex></Skeleton>
           </Flex>
         ))}
         <Button onClick={handleAddBook}>Add Book</Button>
-        <AssistiveLabel error={error} />
+        {/* <AssistiveLabel error={error} /> */}
       </UIState>
     </Flex>
   );

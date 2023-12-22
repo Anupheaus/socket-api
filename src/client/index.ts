@@ -1,3 +1,3 @@
-export * from './useSocketController';
-export * from './SocketControllersProvider';
-export * from './useSocketControllers';
+export * from './ControllersProvider';
+export * from './createUseController';
+export * from './useControllers';

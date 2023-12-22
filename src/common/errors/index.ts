@@ -1,2 +1,2 @@
-export * from './SocketClientError';
-export * from './SocketServerError';
+export * from './ControllerError';
+export * from './SocketAPIError';

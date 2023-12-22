@@ -5,9 +5,10 @@ import { configureStaticFiles } from './static';
 import { configureViews } from './views';
 import readline from 'readline';
 import 'tty';
-import { SocketServer } from '../../src/server';
+import { createSocketApiServer } from '../../src/server';
 import { createSSLServer } from '@anupheaus/ssl-server';
 import path from 'path';
+import { AuthorsStore } from './controllers';
 
 readline.emitKeypressEvents(process.stdin);
 if (process.stdin.isTTY) process.stdin.setRawMode(true);
@@ -48,8 +49,7 @@ async function setup() {
   autoLog('configuring SSL', 'SSL configured');
   const { server, startServer, stopServer } = await createSSLServer({ callback: app.callback(), certsPath: path.resolve(__dirname, '../certs'), port: 3011, host: 'blinda.com', logger });
   autoLog('configuring sockets', 'Sockets configured');
-  SocketServer.start({ server, url: '/socket/controllers', controllers: [BooksStore] });
-  // configureSockets(server);
+  createSocketApiServer({ server, url: '/api/socket', controllers: [new BooksStore(), new AuthorsStore()] });
   autoLog('configuring static routes', 'Static routes configured');
   configureStaticFiles(app);
   autoLog('configuring views', 'Views configured');

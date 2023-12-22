@@ -1,27 +1,44 @@
-import { createController } from '../../../src/server';
+import { ControllerAction, ControllerEffect, ControllerEvent, ControllerQuery } from '../../../src/server';
 import type { Book } from '../../common';
+import { toController } from './toController';
 
-export const BooksStore = createController()({
-  name: 'books',
-  functions({ createQuery, createEvent, createEffect, createAction }) {
-    const books: Book[] = [
-      { id: 1, title: 'The Hobbit', author: 'J.R.R. Tolkien' },
-      { id: 2, title: 'The Lord of the Rings', author: 'J.R.R. Tolkien' },
-      { id: 3, title: 'The Silmarillion', author: 'J.R.R. Tolkien' },
-      { id: 4, title: 'The Chronicles of Narnia', author: 'C.S. Lewis' },
-      { id: 5, title: 'The Lion, the Witch and the Wardrobe', author: 'C.S. Lewis' },
+export class BooksStore extends toController('books') {
+  constructor() {
+    super();
+
+    this.#books = [
+      { id: '1', title: 'The Hobbit', authorId: '1', price: 9.99 },
+      { id: '2', title: 'The Lord of the Rings', authorId: '1', price: 19.99 },
+      { id: '3', title: 'The Silmarillion', authorId: '1', price: 14.99 },
+      { id: '4', title: 'The Chronicles of Narnia', authorId: '2', price: 29.99 },
+      { id: '5', title: 'The Lion, the Witch and the Wardrobe', authorId: '2', price: 9.99 },
     ];
+  }
 
-    return {
+  #books: Book[];
 
-      getAllBooks: createQuery(() => books),
+  @ControllerQuery()
+  public async getAllBooks() {
+    return this.respond.asQuery(this.#books);
+  }
 
-      addBook: createEffect((book: Book): void => { books.push(book); }),
+  @ControllerEffect()
+  public async addBook(book: Book) {
+    this.#books.push(book);
+    this.onBookSold(book);
+    return this.respond.asEffect();
+  }
 
-      printAllBooks: createAction((): void => { return; }),
+  @ControllerAction()
+  public async printAllBooks() {
+    return this.respond.asAction();
+  }
 
-      onBookSold: createEvent((book: Book) => book),
+  @ControllerEvent()
+  public async onBookSold(book: Book) {
+    // const { informAuthorOfSale } = this.useController('authors');
+    // informAuthorOfSale(book.authorId, book.price);
+    return this.respond.asEvent(book);
+  }
 
-    };
-  },
-});
+}

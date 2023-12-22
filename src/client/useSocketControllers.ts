@@ -1,10 +1,9 @@
-import { useContext } from 'react';
-import { SocketControllersConnectionContext } from './SocketControllersContext';
+// import { useContext } from 'react';
 
-export function useSocketControllers() {
-  const isConnected = useContext(SocketControllersConnectionContext);
+// export function useSocketControllers() {
+//   const isConnected = useContext(ControllersConnectionContext);
 
-  return {
-    isConnected,
-  };
-}
+//   return {
+//     isConnected,
+//   };
+// }

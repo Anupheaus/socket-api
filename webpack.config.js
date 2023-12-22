@@ -38,8 +38,6 @@ const generateSettings = (name, isDev) => ({
     alias: {
       'react': path.join(__dirname, './node_modules/react'),
       'react-dom': path.join(__dirname, './node_modules/react-dom'),
-      '@anupheaus/common': path.join(__dirname, '../common/src'),
-      '@anupheaus/react-ui': path.join(__dirname, '../react-ui/src'),
     },
   },
   plugins: [
@@ -83,44 +81,9 @@ const generateSettings = (name, isDev) => ({
 module.exports = (env, argv) => {
   const isDev = argv.mode === 'development';
   const clientSettings = generateSettings('client', isDev);
-  // const commonSettings = generateSettings('common', isDev);
   const serverSettings = generateSettings('server', isDev);
-  const pluginSettings = generateSettings('plugin', isDev);
 
-  return [{
-
-    /* Plugin */
-    ...pluginSettings,
-    watch: true,
-    devtool: false,
-    mode: 'production',
-    output: {
-      ...pluginSettings.output,
-      library: {
-        type: 'commonjs2',
-      },
-      path: __dirname,
-    },
-    entry: {
-      SocketAPIPlugin: './src/plugin/index.ts',
-    },
-    plugins: [
-      ...(pluginSettings.plugins ?? []),
-      new NodemonPlugin({
-        script: path.resolve(__dirname, './test.js'),
-        watch: [path.resolve(__dirname, './SocketAPIPlugin.js')],
-      }),
-    ],
-    target: 'node',
-    externals: [
-      nodeExternals(),
-    ],
-    optimization: {
-      minimize: false,
-      runtimeChunk: false,
-    },
-  }, {
-
+  const config = [{
     /* Client */
     ...clientSettings,
     entry: {
@@ -148,13 +111,7 @@ module.exports = (env, argv) => {
         Buffer: ['buffer', 'Buffer'],
       }),
     ],
-  }, /*(isDev ? undefined : {
-    ...commonSettings,
-    entry: {
-      common: './src/common/index.ts',
-    },
-    target: 'web',
-  }),*/ {
+  }, {
 
     /* Server */
     ...serverSettings,
@@ -179,6 +136,8 @@ module.exports = (env, argv) => {
         ],
       }),
     ],
-    // }].filter(v => !!v);
-  }].filter(v => !!v && v.name === 'plugin');
+  }];
+
+  if (argv.name != null) return config.find(({ name }) => name.toLowerCase() === argv.name.toLowerCase());
+  return config;
 };

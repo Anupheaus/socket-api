@@ -1,7 +1,7 @@
 import { Button, createStyles, Flex, useBound } from '@anupheaus/react-ui';
 import { ReactNode, useState } from 'react';
-import { SocketControllersProvider } from '../../src/client/SocketControllersProvider';
-import { SocketControllerSerialisedError } from '../../src/common';
+import { ControllersProvider } from '../../src/client';
+import { ControllerError } from '../../src/common';
 import { Books } from './Books';
 
 const useStyles = createStyles({
@@ -21,17 +21,18 @@ export const App = () => {
     </>));
   });
 
-  const deserialiseError = useBound((error: SocketControllerSerialisedError) => {
-    return new Error(error.message);
+  const handleError = useBound((error: ControllerError) => {
+    // eslint-disable-next-line no-console
+    console.error(error);
   });
 
   return (
     <Flex tagName="app" isVertical className={css.app}>
-      <SocketControllersProvider url="/socket/controllers" token={token} onTokenUpdated={setToken} onDeserialiseError={deserialiseError}>
+      <ControllersProvider url="/api/socket" token={token} onTokenUpdated={setToken} onError={handleError}>
         <Books />
         {content}
         <Button onClick={createNewBooksInstance}>Create New Books Instance</Button>
-      </SocketControllersProvider>
+      </ControllersProvider>
     </Flex>
   );
 };

@@ -1,25 +1,48 @@
-import { is } from '@anupheaus/common';
-import { SocketServerError } from '../../common';
-import { Decorator, Decorators } from '../internalSockets';
+import 'reflect-metadata';
+import { ControllerInstance } from '../../common';
+import type { ServerControllerMetadata, ServerControllerMetadataMap } from '../ServerControllerModels';
+import { SocketApiServer } from '../SocketApiServer';
 
-const DecoratorSymbol = Symbol('SocketDecorator');
+interface MetadataGeneratorFunctionProps {
+  instance: ControllerInstance;
+  instanceId: string;
+  server: SocketApiServer;
+}
+
+type MetadataGeneratorFunction = (props: MetadataGeneratorFunctionProps) => ServerControllerMetadata;
 
 class DecoratorsRegistry {
-
-  public register(descriptor: PropertyDescriptor, settings: Decorator): void {
-    if (!is.function(descriptor.value)) throw new SocketServerError('Socket Controller Decorator was not applied to a function.');
-    const decorators = this.get(descriptor) ?? [];
-    descriptor.value[DecoratorSymbol] = decorators;
-    decorators.push(settings);
+  constructor() {
+    this.#instanceIds = new WeakMap();
   }
 
-  public get(descriptor: PropertyDescriptor): Decorators | undefined {
-    if (!is.function(descriptor.value)) throw new SocketServerError('Socket Controller Decorator was not applied to a function.');
-    return descriptor.value[DecoratorSymbol];
+  #instanceIds: WeakMap<ControllerInstance, string>;
+
+  public register(target: any, propertyKey: PropertyKey, generateMetadata: MetadataGeneratorFunction): void {
+    const decorators: Map<PropertyKey, MetadataGeneratorFunction> = Reflect.getMetadata('controller:decorators', target) ?? new Map<PropertyKey, MetadataGeneratorFunction>();
+    decorators.set(propertyKey, generateMetadata);
+    Reflect.defineMetadata('controller:decorators', decorators, target);
   }
 
-  public has(descriptor: PropertyDescriptor): boolean {
-    return this.get(descriptor) != null;
+  public get(target: any): MetadataGeneratorFunction[] | undefined {
+    const decorators = Reflect.getMetadata('controller:decorators', target);
+    if (!decorators) return undefined;
+    return Array.from(decorators.values());
+  }
+
+  public has(target: any): boolean {
+    return Reflect.getMetadata('controller:decorators', target) != null;
+  }
+
+  public getMetadataFor(instances: ControllerInstance[], server: SocketApiServer): ServerControllerMetadataMap {
+    const metadata = instances.map(instance => {
+      const decorators: Map<PropertyKey, MetadataGeneratorFunction> | undefined = Reflect.getMetadata('controller:decorators', instance);
+      if (!decorators) return [];
+      const instanceId = Math.uniqueId();
+      this.#instanceIds.set(instance, instanceId);
+      return decorators.map((ignore, generateMetadata) => generateMetadata({ instance, instanceId, server }));
+    }).flatten().removeNull();
+    return new Map(metadata.map(item => [`${item.name}.${item.methodName}`, item] as const));
   }
 }
 

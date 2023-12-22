@@ -17,12 +17,9 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "@anupheaus/common": [
-        "../common/src"
-      ],
-      "@anupheaus/react-ui": [
-        "../react-ui/src"
-      ],
+      "react": [
+        "./node_modules/@types/react"
+      ]
     },
     "lib": [
       "DOM",

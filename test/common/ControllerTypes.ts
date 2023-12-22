@@ -1,6 +1,7 @@
-import { createControllerTypes } from '../../src/common';
-import type { BooksStore } from '../server/controllers/BooksStore';
+import { ToControllerTypes } from '../../src/common';
+import type { BooksStore, AuthorsStore } from '../server/controllers';
 
-export const controllerTypes = createControllerTypes<[
-  typeof BooksStore,
-]>();
+export type ControllerTypes = ToControllerTypes<[
+  BooksStore,
+  AuthorsStore,
+]>;

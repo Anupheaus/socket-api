@@ -1,12 +1,16 @@
-import { createSocketControllerLink } from '../../src/common';
-import type { BooksStore as BookStoreType } from '../server/controllers/BooksStore';
-
-export interface Book {
-  id: number;
-  title: string;
-  author: string;
+export interface Author {
+  id: string;
+  name: string;
+  totalSoldValue: number;
 }
 
-export const BooksStoreLink = 'BooksStore';
+export interface Book {
+  id: string;
+  title: string;
+  authorId: string;
+  price: number;
+}
 
-export const BooksStore = createSocketControllerLink<BookStoreType>(BooksStoreLink);
+// export const BooksStoreLink = 'BooksStore';
+
+// export const BooksStore = createSocketControllerLink<BookStoreType>(BooksStoreLink);

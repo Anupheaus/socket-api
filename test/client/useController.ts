@@ -1,5 +1,11 @@
+import { createUseController } from '../../src/client';
 import { ControllerTypes } from '../common';
 
-export function useController<K extends keyof typeof ControllerTypes>(name: K): typeof ControllerTypes[K] {
-  return ControllerTypes[name];
-}
+export const useController = createUseController<ControllerTypes>();
+
+// () => {
+//   const { getAllBooks, printAllBooks, addBook } = useController('books');
+//   const { response: books } = getAllBooks();
+
+
+// };
