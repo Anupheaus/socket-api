@@ -1,16 +1,15 @@
 /* eslint-disable max-classes-per-file */
-import { ConstructorOf } from '@anupheaus/common';
 import { ControllerInstance, SocketAPIError } from '../common';
 import { getContext } from './context';
 import type { ControllerActionResponse, ControllerContext, ControllerEffectResponse, ControllerEventResponse, ControllerQueryResponse, ControllerRequest, ControllerRespond } from './ServerControllerModels';
 import { ControllerResponseType } from './ControllerModelsInternal';
+import { ConstructorOf, MergeMixinConstructor } from '@anupheaus/common';
 
 class AnyClass { }
 
 export function createToController<ContextType extends ControllerContext>() {
-  return <Name extends string, BaseType extends ConstructorOf<AnyClass>>(name: Name, Base?: BaseType) => {
-    const BaseClass = (Base ?? AnyClass) as BaseType;
-    return class Controller extends BaseClass {
+  return <Name extends string, BaseType extends ConstructorOf<AnyClass>>(name: Name, Base: BaseType = AnyClass as BaseType) => {
+    class Controller extends Base {
 
       public get name() { return name; }
 
@@ -58,7 +57,8 @@ export function createToController<ContextType extends ControllerContext>() {
         return controller;
       }
 
-    };
+    }
+    return Controller as unknown as MergeMixinConstructor<typeof Controller, BaseType>;
   };
 }
 

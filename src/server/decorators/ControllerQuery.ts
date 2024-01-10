@@ -1,5 +1,5 @@
 import { AnyObject, is } from '@anupheaus/common';
-import { ControllerQuerySubscription, ControllerQueryUpdate } from '../../common';
+import { ControllerQuerySubscription, ControllerQueryUpdate, SocketAPIError } from '../../common';
 import { SocketApiClient } from '../SocketApiClient';
 import { decoratorsRegistry } from './decoratorsRegistry';
 
@@ -37,11 +37,16 @@ export function ControllerQuery() {
         // here we execute the query and if the results are the same as las time 
         const executeQuery = async () => {
           const lastQueryResultHash = getLastQueryResult(queryResults, client, query.hash);
-          const results = await func.call(instance, payload);
-          const resultHash = Object.hash(results);
-          if (lastQueryResultHash != null && resultHash === lastQueryResultHash) return;
-          setLastQueryResult(queryResults, client, query.hash, resultHash);
-          send({ queryHash: query.hash, results } as ControllerQueryUpdate, eventName => `${eventName}.${query.hash}`);
+          try {
+            const results = await func.apply(instance, payload);
+            const resultHash = Object.hash(results);
+            if (lastQueryResultHash != null && resultHash === lastQueryResultHash) return;
+            setLastQueryResult(queryResults, client, query.hash, resultHash);
+            send({ queryHash: query.hash, results } as ControllerQueryUpdate, eventName => `${eventName}.${query.hash}`);
+          } catch (e) {
+            const error = new SocketAPIError({ error: e });
+            send({ queryHash: query.hash, error } as ControllerQueryUpdate, eventName => `${eventName}.${query.hash}`);
+          }
         };
 
         if (query.action === 'subscribe') {

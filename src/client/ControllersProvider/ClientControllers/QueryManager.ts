@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client';
 import { ControllerQuerySubscription, ControllerQueryUpdate, SocketAPIError } from '../../../common';
-import { Logger } from '@anupheaus/common';
+import { AnyObject, Logger, is } from '@anupheaus/common';
 
 export interface QueryState {
   response: unknown;
@@ -76,8 +76,13 @@ export class QueryManager {
     socket.emit(eventName, { query: { hash, action: 'unsubscribe' } } as ControllerQuerySubscription);
   }
 
-  #handleUpdate({ queryHash, results }: ControllerQueryUpdate): void {
-    const state = { response: results, error: undefined, isLoading: false };
+  #hydrateError(error: AnyObject | undefined): SocketAPIError | undefined {
+    if (!is.plainObject(error)) return undefined;
+    if (error.name === 'SocketAPIError') return new SocketAPIError(error);
+  }
+
+  #handleUpdate({ queryHash, results, error }: ControllerQueryUpdate): void {
+    const state = { response: results, error: this.#hydrateError(error), isLoading: false };
     this.#cacheByHash.set(queryHash, state);
     const hooks = this.#configByHash.get(queryHash) ?? [];
     hooks.forEach(hook => hook.stateUpdate(state));

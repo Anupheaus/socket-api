@@ -1,5 +1,6 @@
 // import { AnyFunction, MapOf } from '@anupheaus/common';
 import type { Controller as ServerControllerType } from '../server';
+import { SocketAPIError } from './errors';
 
 export interface ControllerQuerySubscription {
   query: {
@@ -11,7 +12,8 @@ export interface ControllerQuerySubscription {
 
 export interface ControllerQueryUpdate {
   queryHash: string;
-  results: unknown;
+  results?: unknown;
+  error?: SocketAPIError;
 }
 
 // export type RemoveStateFromFunction<FunctionType extends AnyFunction, ContextType extends ControllerContext> =

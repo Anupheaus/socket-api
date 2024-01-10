@@ -11,20 +11,18 @@ export interface ControllerContext {
   token: string;
 }
 
-export type ControllerActionResponse<T = void> = ControllerResponse<'action'> & T;
-export type ControllerEffectResponse<T = void> = ControllerResponse<'effect'> & T;
-export type ControllerQueryResponse<T = void> = ControllerResponse<'query'> & T;
-export type ControllerEventResponse<T = void> = ControllerResponse<'event'> & T;
+export type ControllerActionResponse<T = undefined> = ControllerResponse<'action'> & T;
+export type ControllerEffectResponse<T = undefined> = ControllerResponse<'effect'> & T;
+export type ControllerQueryResponse<T = undefined> = ControllerResponse<'query'> & T;
+export type ControllerEventResponse<T = undefined> = ControllerResponse<'event'> & T;
 
 export type ControllerFunctionResponse<T = void> = ControllerActionResponse<T> | ControllerEffectResponse<T> | ControllerQueryResponse<T> | ControllerEventResponse<T>;
 
 export interface ControllerRespond {
-  asAction<R = void>(response: R | void): ControllerActionResponse<R>;
-  asQuery(): ControllerQueryResponse;
-  asQuery<R>(response: R): ControllerQueryResponse<R>;
-  asEffect(): ControllerEffectResponse;
-  asEffect<R>(response: R): ControllerEffectResponse<R>;
-  asEvent<R = void>(response: R | void): ControllerEventResponse<R>;
+  asAction<R>(response?: R): ControllerActionResponse<R>;
+  asQuery<R>(response?: R): ControllerQueryResponse<R>;
+  asEffect<R>(response?: R): ControllerEffectResponse<R>;
+  asEvent<R>(response?: R): ControllerEventResponse<R>;
 }
 
 export interface ProxiedInstanceOfController {
