@@ -43,17 +43,24 @@ export class SocketApiClient {
   #logger: Logger;
   #queries: Map<string, Map<string, QueryRequestMetadata>>;
   #url: URL;
+  #context?: SocketApiContext;
 
-  async #createContext(): Promise<SocketApiContext> {
+  async #getOrCreateContext(): Promise<SocketApiContext> {
     const { server, connection, onLoadContext } = this.#props;
     const token = connection.handshake.auth.token ?? connection.handshake.headers.authorization?.toLowerCase()?.replace('bearer ', '');
-    return {
-      server,
-      client: this,
-      controllerContext: await onLoadContext({
-        token,
-      }, connection),
-    };
+    if (this.#context) {
+      if (this.#context.controllerContext.token !== token) this.#context.controllerContext.token = token;
+      return this.#context;
+    } else {
+      this.#context = {
+        server,
+        client: this,
+        controllerContext: await onLoadContext({
+          token,
+        }, connection),
+      };
+      return this.#context;
+    }
   }
 
   async #saveContext(context: SocketApiContext): Promise<SocketApiContext> {
@@ -86,12 +93,13 @@ export class SocketApiClient {
   }
 
   async #execute(func: () => Promise<void>): Promise<void> {
-    const context = await this.#createContext();
+    const context = await this.#getOrCreateContext();
     const originalContext = Object.clone(context);
     await executeWithContext(context, async () => {
       await func();
       const updatedContext = await this.#saveContext(context);
       if (originalContext.controllerContext.token !== updatedContext.controllerContext.token) this.#handleTokenChanged(updatedContext.controllerContext.token);
+      this.#context = updatedContext;
     });
   }
 
@@ -103,12 +111,18 @@ export class SocketApiClient {
     const response = is.function(args[args.length - 1]) ? args.pop() : undefined;
     await this.#execute(async () => {
       this.#logger.debug('Received API request from client', { eventName, args, withAck: is.function(response) });
-      const result = await func({
-        client: this,
-        args,
-        send: (payload: unknown, modifyEventName: ((eventName: string) => string) = name => name) => this.#emit(modifyEventName(eventName), payload),
-      });
-      if (is.function(response)) response(result);
+      try {
+        const result = await func({
+          client: this,
+          args,
+          send: (payload: unknown, modifyEventName: ((eventName: string) => string) = name => name) => this.#emit(modifyEventName(eventName), payload),
+        });
+        if (is.function(response)) response(result);
+      } catch (e) {
+        const error = new SocketAPIError({ error: e });
+        this.#logger.error('Error executing API request', { eventName, args, error });
+        if (is.function(response)) response({ error });
+      }
     });
   }
 

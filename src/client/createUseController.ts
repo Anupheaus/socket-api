@@ -24,7 +24,7 @@ type ControllerFunctions<ControllersType extends ControllerInstance[], Controlle
   [ControllerInstanceType in ControllersType[number]as ControllerInstanceType['name']]: ConvertControllerFunctions<ControllerInstanceType>;
 }[ControllerNamesType];
 
-type ControllerNames<Controllers extends ControllerInstance[]> = Controllers[number]['name'];
+export type ControllerNames<Controllers extends ControllerInstance[]> = Controllers[number]['name'];
 
 export function createUseController<C extends ControllerInstance[]>() {
   return function useController<K extends ControllerNames<C>>(name: K) {

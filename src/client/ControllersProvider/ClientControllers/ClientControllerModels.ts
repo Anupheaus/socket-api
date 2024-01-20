@@ -7,6 +7,8 @@ export interface ClientControllerCommonProps {
   logger: Logger;
   useSocket(delegate: (socket: Socket) => (() => void) | void): void;
   getSocket(): Promise<Socket>;
+  onHydrateResponse(response: unknown, metadata: ControllerMetadata): unknown;
+  onDehydrateRequestArgs(args: unknown[], metadata: ControllerMetadata): unknown[];
 }
 
 export interface CreateControllerFunctionProps extends ClientControllerCommonProps {

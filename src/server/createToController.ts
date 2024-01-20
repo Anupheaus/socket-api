@@ -2,7 +2,6 @@
 import { ControllerInstance, SocketAPIError } from '../common';
 import { getContext } from './context';
 import type { ControllerActionResponse, ControllerContext, ControllerEffectResponse, ControllerEventResponse, ControllerQueryResponse, ControllerRequest, ControllerRespond } from './ServerControllerModels';
-import { ControllerResponseType } from './ControllerModelsInternal';
 import { ConstructorOf, MergeMixinConstructor } from '@anupheaus/common';
 
 class AnyClass { }
@@ -32,20 +31,10 @@ export function createToController<ContextType extends ControllerContext>() {
             return response as ControllerEffectResponse<T>;
           },
           asAction<T = void>(response: T | void): ControllerActionResponse<T> {
-            return {
-              [ControllerResponseType]: {
-                type: 'action',
-              },
-              ...response,
-            } as ControllerActionResponse<T>;
+            return response as ControllerActionResponse<T>;
           },
           asEvent<T = void>(response: T | void): ControllerEventResponse<T> {
-            return {
-              [ControllerResponseType]: {
-                type: 'event',
-              },
-              ...response,
-            } as ControllerEventResponse<T>;
+            return response as ControllerEventResponse<T>;
           },
         };
       }

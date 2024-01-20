@@ -3,10 +3,11 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { CreateControllerFunctionProps } from './ClientControllerModels';
 import { QueryState } from './QueryManager';
 
-export function createControllerQueryFunc({ controllerName, methodName, queryManager }: CreateControllerFunctionProps) {
+export function createControllerQueryFunc({ controllerName, methodName, queryManager, onDehydrateRequestArgs, onHydrateResponse }: CreateControllerFunctionProps) {
   const eventName = `${controllerName}.${methodName}`;
 
   return (...args: unknown[]): QueryState => {
+    args = onDehydrateRequestArgs(args, { name: controllerName, methodName, type: 'query' });
     const id = useId();
     const [state, setState] = useState<QueryState>({ response: undefined, error: undefined, isLoading: true });
     const isUnmounted = useOnUnmount();
@@ -20,9 +21,10 @@ export function createControllerQueryFunc({ controllerName, methodName, queryMan
         hash,
         eventName,
         payload: args,
-        stateUpdate: newState => {
+        stateUpdate: ({ response, isLoading, error }) => {
           if (isUnmounted()) return;
-          setState(newState);
+          response = onHydrateResponse(response, { name: controllerName, methodName, type: 'query' });
+          setState({ response, isLoading, error });
         },
       });
     }, [hash]);
