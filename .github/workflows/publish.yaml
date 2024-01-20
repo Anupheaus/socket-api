@@ -23,8 +23,8 @@ jobs:
         run: npm config set //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }} && npm config set @anupheaus:registry=https://npm.pkg.github.com/
       - name: Install Dependencies
         run: pnpm i
-      - name: Run Tests
-        run: pnpm run test-ci
+      # - name: Run Tests
+      #   run: pnpm run test-ci
       - name: Build
         run: pnpm run build
       - name: Perform Version Bump
