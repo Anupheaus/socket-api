@@ -15,8 +15,7 @@ export function ControllerEvent() {
       };
       return ({
         type: 'event',
-        name: instance.name,
-        methodName: propertyKey,
+        name: propertyKey,
         invoke: ({ args }) => func(...args),
       });
     });

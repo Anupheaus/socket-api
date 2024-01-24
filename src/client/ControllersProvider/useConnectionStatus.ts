@@ -51,13 +51,6 @@ export function useConnectionStatus({ logger, url, token, onConnected, onTokenUp
       onTokenUpdated?.(newToken);
     });
 
-    // socket.on('updateClient', ({ hash, response }: UpdateClientMessage) => {
-    //   logger.info('Received update from server', { socketId, hash });
-    //   logger.debug('Updating cache with response', { socketId, hash });
-    //   responseCache.set(hash, Promise.resolve(response));
-    //   callListeners(hash, response, socketId);
-    // });
-
     return () => {
       logger.info('Disconnecting from server', { url });
       // close the old one

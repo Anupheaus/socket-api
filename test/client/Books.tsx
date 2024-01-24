@@ -1,7 +1,8 @@
-import { AssistiveLabel, Button, Flex, Skeleton, UIState, useBound } from '@anupheaus/react-ui';
+import { Button, Flex, Skeleton, UIState, useBound } from '@anupheaus/react-ui';
 import { makeStyles } from 'tss-react/mui';
 import { Book } from '../common';
 import { useBooks } from './useBooks';
+import { useAuthors } from './useAuthors';
 
 const useStyles = makeStyles()({
   books: {
@@ -15,6 +16,9 @@ const emptyBooks: Book[] = [{ id: '1', authorId: '', title: '', price: 0.00 }];
 export const Books = () => {
   const { classes } = useStyles();
   const { books, error, isLoading, addBook } = useBooks();
+  const { authors } = useAuthors();
+
+  console.log({ books, authors });
 
   // const isLoading = false;
   // const books: Book[] = [];

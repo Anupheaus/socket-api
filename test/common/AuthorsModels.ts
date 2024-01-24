@@ -4,12 +4,6 @@ export interface Author {
   totalSoldValue: number;
 }
 
-export interface Book {
-  id: string;
-  title: string;
-  authorId: string;
-  price: number;
-}
 
 // export const BooksStoreLink = 'BooksStore';
 

@@ -7,7 +7,7 @@ export function createControllerQueryFunc({ controllerName, methodName, queryMan
   const eventName = `${controllerName}.${methodName}`;
 
   return (...args: unknown[]): QueryState => {
-    args = onDehydrateRequestArgs(args, { name: controllerName, methodName, type: 'query' });
+    args = onDehydrateRequestArgs(args, { name: methodName, type: 'query' });
     const id = useId();
     const [state, setState] = useState<QueryState>({ response: undefined, error: undefined, isLoading: true });
     const isUnmounted = useOnUnmount();
@@ -23,7 +23,7 @@ export function createControllerQueryFunc({ controllerName, methodName, queryMan
         payload: args,
         stateUpdate: ({ response, isLoading, error }) => {
           if (isUnmounted()) return;
-          response = onHydrateResponse(response, { name: controllerName, methodName, type: 'query' });
+          response = onHydrateResponse(response, { name: methodName, type: 'query' });
           setState({ response, isLoading, error });
         },
       });

@@ -1,6 +1,6 @@
 import { AnyObject, is } from '@anupheaus/common';
 import { ControllerQuerySubscription, ControllerQueryUpdate, SocketAPIError } from '../../common';
-import { SocketApiClient } from '../SocketApiClient';
+import { SocketApiClient } from '../ServerClient';
 import { decoratorsRegistry } from './decoratorsRegistry';
 
 function validateRequest(request: AnyObject): request is ControllerQuerySubscription {
@@ -27,8 +27,7 @@ export function ControllerQuery() {
     const func = descriptor.value;
     decoratorsRegistry.register(target, propertyKey, ({ instance, instanceId }) => ({
       type: 'query',
-      name: instance.name,
-      methodName: propertyKey,
+      name: propertyKey,
       async invoke({ client, args, send }) {
         const request = args[0] as AnyObject;
         if (!validateRequest(request)) return;

@@ -1,9 +1,9 @@
-import { ControllerContext } from '../ServerControllerModels';
-import { SocketApiClient } from '../SocketApiClient';
-import { SocketApiServer } from '../SocketApiServer';
+import { ServerControllerContext } from '../ServerModels';
+import { SocketApiClient } from '../ServerClient';
+import { SocketApiServer } from '../ServerServer';
 
 export interface SocketApiContext {
   server: SocketApiServer;
   client: SocketApiClient;
-  controllerContext: ControllerContext;
+  controllerContext: ServerControllerContext;
 }

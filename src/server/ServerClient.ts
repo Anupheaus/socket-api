@@ -3,8 +3,8 @@ import { createLogger } from '../common/logger';
 import { Socket } from 'socket.io';
 import { SocketAPIError } from '../common';
 import { executeWithContext, SocketApiContext } from './context';
-import type { ControllerContext, ServerControllerMetadataMap } from './ServerControllerModels';
-import type { SocketApiServer } from './SocketApiServer';
+import type { ServerControllerContext, ServerControllerMetadata } from './ServerModels';
+import type { Server } from './ServerServer';
 
 const logger = createLogger('SocketServerClient');
 
@@ -15,11 +15,11 @@ interface QueryRequestMetadata {
 }
 
 interface Props {
-  server: SocketApiServer;
+  server: Server;
   connection: Socket;
-  metadata: ServerControllerMetadataMap;
-  onLoadContext(state: ControllerContext, client: Socket): PromiseMaybe<ControllerContext>;
-  onSaveContext(state: ControllerContext, client: Socket): PromiseMaybe<ControllerContext>;
+  metadata: Map<string, ServerControllerMetadata>;
+  onLoadContext(state: ServerControllerContext, client: Socket): PromiseMaybe<ServerControllerContext>;
+  onSaveContext(state: ServerControllerContext, client: Socket): PromiseMaybe<ServerControllerContext>;
 }
 
 export class SocketApiClient {
@@ -78,7 +78,8 @@ export class SocketApiClient {
 
   #sendMetadata(): void {
     const { connection, metadata } = this.#props;
-    connection.emit('metadata', metadata.toValuesArray());
+    const simpleMetdata = metadata.toValuesArray().map(({ methods, ...rest }) => ({ ...rest, methods: methods.toValuesArray() }));
+    connection.emit('metadata', simpleMetdata);
   }
 
   #handleTokenChanged(token: string | undefined) {
@@ -105,18 +106,19 @@ export class SocketApiClient {
 
   async #executeApiRequest(eventName: string, ...args: unknown[]): Promise<void> {
     const { metadata } = this.#props;
-    const eventMetadata = metadata.get(eventName);
-    if (!eventMetadata) throw new SocketAPIError({ message: `No metadata found for event "${eventName}"`, meta: { eventName, args } });
+    const eventNameParts = eventName.split('.');
+    if (eventNameParts.length < 2) throw new SocketAPIError({ message: `Invalid event name "${eventName}"`, meta: { eventName, args } });
+    const [instanceName, methodName] = eventNameParts;
+    const instanceMetadata = metadata.get(instanceName);
+    if (instanceMetadata == null) throw new SocketAPIError({ message: `No instance metadata found for event "${eventName}"`, meta: { eventName, args } });
+    const eventMetadata = instanceMetadata.methods.get(methodName);
+    if (eventMetadata == null) throw new SocketAPIError({ message: `No method metadata found for event "${eventName}"`, meta: { eventName, args } });
     const func = eventMetadata.invoke;
     const response = is.function(args[args.length - 1]) ? args.pop() : undefined;
     await this.#execute(async () => {
       this.#logger.debug('Received API request from client', { eventName, args, withAck: is.function(response) });
       try {
-        const result = await func({
-          client: this,
-          args,
-          send: (payload: unknown, modifyEventName: ((eventName: string) => string) = name => name) => this.#emit(modifyEventName(eventName), payload),
-        });
+        const result = await func(...args);
         if (is.function(response)) response(result);
       } catch (e) {
         const error = new SocketAPIError({ error: e });

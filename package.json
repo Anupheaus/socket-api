@@ -66,5 +66,10 @@
     "util": "^0.12.5",
     "browser-resolve": "^2.0.0",
     "buffer": "^6.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@anupheaus/common": "^0.0.26"
+    }
   }
 }

@@ -14,8 +14,7 @@ export function ControllerEffect() {
       };
       return ({
         type: 'effect',
-        name: instance.name,
-        methodName: propertyKey,
+        name: propertyKey,
         invoke: ({ args }) => func(...args),
       });
     });

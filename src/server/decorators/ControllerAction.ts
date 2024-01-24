@@ -9,8 +9,7 @@ export function ControllerAction() {
       func = func.bind(instance);
       return ({
         type: 'action',
-        name: instance.name,
-        methodName: propertyKey,
+        name: propertyKey,
         invoke: ({ args }) => func(...args),
       });
     });

@@ -1,2 +1,2 @@
-export * from './BookModels';
-export * from './ControllerTypes';
+export * from './BooksModels';
+export * from './AuthorsModels';

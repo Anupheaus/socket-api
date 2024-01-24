@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 import { ControllerInstance } from '../../common';
-import type { ServerControllerMetadata, ServerControllerMetadataMap } from '../ServerControllerModels';
-import { SocketApiServer } from '../SocketApiServer';
+import type { ServerControllerMetadata, ServerControllerMethodMetadata } from '../ServerModels';
+import { SocketApiServer } from '../ServerServer';
+import { StoreController } from '../createToController';
 
 interface MetadataGeneratorFunctionProps {
   instance: ControllerInstance;
@@ -9,7 +10,7 @@ interface MetadataGeneratorFunctionProps {
   server: SocketApiServer;
 }
 
-type MetadataGeneratorFunction = (props: MetadataGeneratorFunctionProps) => ServerControllerMetadata;
+type MetadataGeneratorFunction = (props: MetadataGeneratorFunctionProps) => ServerControllerMethodMetadata;
 
 class DecoratorsRegistry {
   constructor() {
@@ -34,15 +35,23 @@ class DecoratorsRegistry {
     return Reflect.getMetadata('controller:decorators', target) != null;
   }
 
-  public getMetadataFor(instances: ControllerInstance[], server: SocketApiServer): ServerControllerMetadataMap {
-    const metadata = instances.map(instance => {
+  public getMetadataFor(instances: ControllerInstance[], server: SocketApiServer) {
+    return new Map(instances.map((instance): [string, ServerControllerMetadata] | undefined => {
       const decorators: Map<PropertyKey, MetadataGeneratorFunction> | undefined = Reflect.getMetadata('controller:decorators', instance);
-      if (!decorators) return [];
+      const isStore = StoreController.isStore(instance);
+      if (decorators == null && !isStore) return;
       const instanceId = Math.uniqueId();
       this.#instanceIds.set(instance, instanceId);
-      return decorators.map((ignore, generateMetadata) => generateMetadata({ instance, instanceId, server }));
-    }).flatten().removeNull();
-    return new Map(metadata.map(item => [`${item.name}.${item.methodName}`, item] as const));
+      const methods = new Map(decorators == null ? [] : decorators.map((ignore, generateMetadata): [string, ServerControllerMethodMetadata] => {
+        const methodMetadata = generateMetadata({ instance, instanceId, server });
+        return [methodMetadata.name, methodMetadata];
+      }));
+      return [instance.name, {
+        name: instance.name,
+        isStore,
+        methods,
+      }];
+    }).removeNull());
   }
 }
 

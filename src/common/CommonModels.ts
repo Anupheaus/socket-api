@@ -1,6 +1,7 @@
 // import { AnyFunction, MapOf } from '@anupheaus/common';
-import type { Controller as ServerControllerType } from '../server';
+import type { Controller } from '../server';
 import { SocketAPIError } from './errors';
+import { ConstructorOf, DataFilters, DataPagination, DataSorts, Record } from '@anupheaus/common';
 
 export interface ControllerQuerySubscription {
   query: {
@@ -69,14 +70,40 @@ export interface ControllerQueryUpdate {
 // //   [ControllerConfigType in ControllerType[number][typeof InternalControllerConfig] as ControllerConfigType['name']]: ControllerConfigType['functions'];
 // // }[ControllerNamesType];
 
-export type Controller = ServerControllerType;
-export type ControllerInstance = InstanceType<Controller>;
+// export type Controller = ServerControllerType;
+// export type ControllerInstance = InstanceType<Controller>;
 // // export type Controller<ContextType extends ControllerContext = ControllerContext, ConfigType extends ControllerConfig<ContextType> = ControllerConfig<ContextType>> = {
 // //   [InternalControllerConfig]: InternalControllerConfig<ContextType, ConfigType>;
 // // };
 
-export interface ControllerMetadata {
+export interface ControllerMethodMetadata {
   name: string;
-  methodName: string;
   type: 'query' | 'event' | 'effect' | 'action';
 }
+
+export interface ControllerMetadata {
+  name: string;
+  isStore: boolean;
+  methods: ControllerMethodMetadata[];
+}
+
+export interface StoreRequest<T extends Record = Record> {
+  filters?: DataFilters<T>;
+  sorts?: DataSorts<T>;
+  pagination?: DataPagination;
+}
+
+export interface StoreResponse<T extends Record = Record> {
+  data: T[];
+  total: number;
+}
+
+export interface ConfigureProps<ControllerType extends ConstructorOf<Controller>> {
+  exposeToClient?: readonly (keyof InstanceType<ControllerType>)[];
+}
+
+export type ClientController<ControllerType extends ConstructorOf<Controller> = ConstructorOf<Controller>, ExposedMembers extends readonly PropertyKey[] | undefined = undefined,
+  Name extends string = string> = ControllerType & {
+    name: Name;
+    exposedToClient: ExposedMembers;
+  };

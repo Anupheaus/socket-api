@@ -1,44 +1,47 @@
-import { ControllerAction, ControllerEffect, ControllerEvent, ControllerQuery } from '../../../src/server';
+/* eslint-disable max-classes-per-file */
+import { Records } from '@anupheaus/common';
+import { Controller, StoreController, StoreRequest, StoreResponse } from '../../../src/server';
 import type { Book } from '../../common';
-import { toController } from './toController';
 
-export class BooksStore extends toController('books') {
+export const BooksStore = Controller.configure(class BooksStore extends StoreController<Book> {
   constructor() {
     super();
 
-    this.#books = [
+    this.#books = new Records([
       { id: '1', title: 'The Hobbit', authorId: '1', price: 9.99 },
       { id: '2', title: 'The Lord of the Rings', authorId: '1', price: 19.99 },
       { id: '3', title: 'The Silmarillion', authorId: '1', price: 14.99 },
       { id: '4', title: 'The Chronicles of Narnia', authorId: '2', price: 29.99 },
       { id: '5', title: 'The Lion, the Witch and the Wardrobe', authorId: '2', price: 9.99 },
-    ];
+    ]);
   }
 
-  #books: Book[];
+  #books: Records<Book>;
 
-  @ControllerQuery()
-  public async getAllBooks() {
-    return this.respond.asQuery(this.#books);
+  public async doSomething(): Promise<void> {
+    /* do nothing */
   }
 
-  @ControllerEffect()
-  public async addBook(book: Book) {
-    this.#books.push(book);
-    this.onBookSold(book);
-    return this.respond.asEffect();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async handleRequest(request: StoreRequest<Book>): Promise<StoreResponse<Book>> {
+    const data = this.#books.toArray();
+    return {
+      data,
+      total: data.length,
+    };
   }
 
-  @ControllerAction()
-  public async printAllBooks() {
-    return this.respond.asAction();
+  protected async handleUpsert(book: Book): Promise<Book> {
+    this.#books.upsert(book);
+    return book;
   }
 
-  @ControllerEvent()
-  public async onBookSold(book: Book) {
-    // const { informAuthorOfSale } = this.useController('authors');
-    // informAuthorOfSale(book.authorId, book.price);
-    return this.respond.asEvent(book);
+  protected async handleRemove(id: string): Promise<void> {
+    this.#books.remove(id);
   }
 
-}
+  protected async handleGet(id: string): Promise<Book | undefined> {
+    return this.#books.get(id);
+  }
+
+}, { name: 'books', exposeToClient: ['doSomething'] });

@@ -1,10 +1,11 @@
 import { ConstructorOf } from '@anupheaus/common';
 import { createComponent } from '@anupheaus/react-ui';
 import { ReactNode, useMemo } from 'react';
-import { ControllerMetadata, SocketAPIError, createLogger } from '../../common';
+import { ControllerMethodMetadata, SocketAPIError, createLogger } from '../../common';
 import { ControllersContext, ControllersContextProps } from './ControllersContext';
-import { createControllers } from './ClientControllers';
+import { createClientControllers } from './ClientControllers';
 import { useConnectionStatus } from './useConnectionStatus';
+import { createClientStores } from './createClientStores';
 
 const logger = createLogger('ControllersProvider');
 
@@ -21,8 +22,8 @@ interface Props {
   errors?: ConstructorOf<SocketAPIError>[];
   onTokenUpdated?(token: string): void;
   onError?(error: SocketAPIError): void;
-  onHydrateResponse?(response: unknown, metadata: ControllerMetadata): unknown;
-  onDehydrateRequestArgs?(args: unknown[], metadata: ControllerMetadata): unknown[];
+  onHydrateResponse?(response: unknown, metadata: ControllerMethodMetadata): unknown;
+  onDehydrateRequestArgs?(args: unknown[], metadata: ControllerMethodMetadata): unknown[];
 }
 
 export const ControllersProvider = createComponent('ControllersProvider', ({
@@ -53,12 +54,13 @@ export const ControllersProvider = createComponent('ControllersProvider', ({
   //   onError?.(hydratedError);
   //   return hydratedError;
   // });
-
-  const controllers = useMemo(() => createControllers({ getSocket, useSocket, metadata, logger, onHydrateResponse, onDehydrateRequestArgs }), [metadata, isConnected, getSocket, useSocket]);
+  const stores = useMemo(() => createClientStores({ metadata, logger, getSocket }), [metadata]);
+  const controllers = useMemo(() => createClientControllers({ getSocket, useSocket, metadata, logger, onHydrateResponse, onDehydrateRequestArgs }), [metadata, isConnected, getSocket, useSocket]);
 
   const context = useMemo((): ControllersContextProps => ({
     isConnected,
     controllers,
+    stores,
   }), [controllers, isConnected]);
 
   if (!isConnected) {
