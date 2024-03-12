@@ -1,5 +1,5 @@
 import { AnyObject, is } from '@anupheaus/common';
-import { SocketAPIError } from '../../../common';
+import { SocketAPIError } from '../common';
 
 export function hydrateError(error: AnyObject | undefined): SocketAPIError | undefined {
   if (!is.plainObject(error)) return;

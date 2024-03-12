@@ -5,11 +5,12 @@ type ErrorProps = ConstructorParameters<typeof Error>[0];
 interface Props extends ErrorProps { }
 
 export class SocketAPIError extends Error {
-  constructor(props: Props) {
+  constructor(props: Props | string) {
     super({
       statusCode: 500,
       title: 'Socket Api Error',
-      ...props,
+      message: typeof (props) === 'string' ? props : undefined,
+      ...(typeof (props) === 'string' ? {} : props),
     });
   }
 

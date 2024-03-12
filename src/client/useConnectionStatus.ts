@@ -2,7 +2,7 @@ import { Logger } from '@anupheaus/common';
 import { useBound, useId, useOnChange } from '@anupheaus/react-ui';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { ControllerMetadata } from '../../common';
+import { ControllerMetadata } from '../common';
 
 
 interface Props {

@@ -1,15 +1,7 @@
-// import { createUseController } from '../../src/client';
-// import type { AuthorsStore, BooksStore } from '../server/controllers';
-// // import { ControllerTypes } from '../common';
+import { createUseController } from '../../src/client';
+import type { AuthorsStore, BooksStore } from '../server/controllers';
 
-// export const useController = createUseController<[
-//   BooksStore,
-//   AuthorsStore,
-// ]>();
-
-// // () => {
-// //   const { getAllBooks, printAllBooks, addBook } = useController('books');
-// //   const { response: books } = getAllBooks();
-
-
-// // };
+export const useController = createUseController<[
+  typeof BooksStore,
+  typeof AuthorsStore,
+]>();

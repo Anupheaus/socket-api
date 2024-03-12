@@ -38,6 +38,7 @@ const generateSettings = (name, isDev) => ({
     alias: {
       'react': path.join(__dirname, './node_modules/react'),
       'react-dom': path.join(__dirname, './node_modules/react-dom'),
+      '@anupheaus/common': path.join(__dirname, '../common/src'),
     },
   },
   plugins: [

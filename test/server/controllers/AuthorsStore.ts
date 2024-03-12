@@ -1,10 +1,10 @@
 import { Records } from '@anupheaus/common';
-import { StoreController, StoreRequest, StoreResponse } from '../../../src/server';
+import { Controller, StoreController, StoreControllerRequest, StoreControllerResponse, StoreControllerUpsertResponse } from '../../../src/server';
 import type { Author } from '../../common';
 
-export class AuthorsStore extends StoreController<Author> {
+export const AuthorsStore = Controller.configure(class AuthorsStore extends StoreController<Author> {
   constructor() {
-    super({ name: 'authors' });
+    super();
 
     this.#authors = new Records([
       { id: '1', name: 'J.R.R. Tolkien', totalSoldValue: 0 },
@@ -15,7 +15,7 @@ export class AuthorsStore extends StoreController<Author> {
   #authors: Records<Author>;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async handleRequest(request: StoreRequest<Author>): Promise<StoreResponse<Author>> {
+  protected async handleRequest(request?: StoreControllerRequest<Author>): Promise<StoreControllerResponse<Author>> {
     const data = this.#authors.toArray();
     return {
       data,
@@ -23,9 +23,9 @@ export class AuthorsStore extends StoreController<Author> {
     };
   }
 
-  protected async handleUpsert(book: Author): Promise<Author> {
-    this.#authors.upsert(book);
-    return book;
+  protected async handleUpsert(author: Author): Promise<StoreControllerUpsertResponse<Author>> {
+    this.#authors.upsert(author);
+    return { record: author, isNew: true };
   }
 
   protected async handleRemove(id: string): Promise<void> {
@@ -36,5 +36,4 @@ export class AuthorsStore extends StoreController<Author> {
     return this.#authors.get(id);
   }
 
-
-}
+}, { name: 'authors', exposeToClient: [] });

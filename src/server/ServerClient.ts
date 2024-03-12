@@ -1,36 +1,30 @@
-import { is, Logger, PromiseMaybe } from '@anupheaus/common';
-import { createLogger } from '../common/logger';
+import { is, Logger, PromiseMaybe, Record } from '@anupheaus/common';
+import { createLogger } from '../common/CommonLogger';
 import { Socket } from 'socket.io';
-import { SocketAPIError } from '../common';
-import { executeWithContext, SocketApiContext } from './context';
-import type { ServerControllerContext, ServerControllerMetadata } from './ServerModels';
+import { ControllerMethodMetadata, SocketAPIError, StoreControllerUpdate } from '../common';
+import { executeWithContext, Context } from './context';
+import type { ControllerContext, ControllerMetadata } from './ServerModels';
 import type { Server } from './ServerServer';
 
 const logger = createLogger('SocketServerClient');
 
-interface QueryRequestMetadata {
-  queryHash: string;
-  instanceId: string;
-  invoke(): Promise<void>;
-}
-
 interface Props {
   server: Server;
   connection: Socket;
-  metadata: Map<string, ServerControllerMetadata>;
-  onLoadContext(state: ServerControllerContext, client: Socket): PromiseMaybe<ServerControllerContext>;
-  onSaveContext(state: ServerControllerContext, client: Socket): PromiseMaybe<ServerControllerContext>;
+  metadata: Map<string, ControllerMetadata>;
+  onLoadContext(state: ControllerContext, client: Socket): PromiseMaybe<ControllerContext>;
+  onSaveContext(state: ControllerContext, client: Socket): PromiseMaybe<ControllerContext>;
+  onHydrateArgs(args: unknown[], metadata: ControllerMethodMetadata): PromiseMaybe<unknown[]>;
 }
 
-export class SocketApiClient {
+export class Client {
   constructor(props: Props) {
     const { connection } = props;
     this.#props = props;
     this.#logger = logger.createSubLogger(connection.id);
-    this.#queries = new Map();
     this.#logger.info('Client instance created', { connectionId: connection.id });
-    const origin = connection.client.conn.request.headers.origin ?? connection.handshake.headers.origin;
-    this.#url = origin != null ? new URL(origin) : new URL('');
+    this.#url = this.#generateUrl();
+    this.#recordIds = new Map();
 
     /** Setup listener */
     this.#startListening();
@@ -41,33 +35,43 @@ export class SocketApiClient {
 
   #props: Props;
   #logger: Logger;
-  #queries: Map<string, Map<string, QueryRequestMetadata>>;
   #url: URL;
-  #context?: SocketApiContext;
+  #context?: Context;
+  #recordIds: Map<string, string[]>;
 
-  async #getOrCreateContext(): Promise<SocketApiContext> {
-    const { server, connection, onLoadContext } = this.#props;
-    const token = connection.handshake.auth.token ?? connection.handshake.headers.authorization?.toLowerCase()?.replace('bearer ', '');
-    if (this.#context) {
-      if (this.#context.controllerContext.token !== token) this.#context.controllerContext.token = token;
-      return this.#context;
-    } else {
-      this.#context = {
-        server,
-        client: this,
-        controllerContext: await onLoadContext({
-          token,
-        }, connection),
-      };
-      return this.#context;
-    }
+  public emit(eventName: string, payload: unknown): void {
+    this.#logger.silly('Sending to client', { eventName, payload });
+    this.#props.connection.emit(eventName, payload);
   }
 
-  async #saveContext(context: SocketApiContext): Promise<SocketApiContext> {
+  #generateUrl(): URL {
+    const { connection } = this.#props;
+    const host = connection.handshake.headers.host ?? connection.request.headers.host ?? connection.client.request.headers.host;
+    const protocol = connection.handshake.secure ? 'wss' : 'ws';
+    const url = connection.handshake.url ?? connection.request.url ?? connection.client.request.url;
+    const origin = connection.handshake.headers.origin ?? connection.handshake.headers.referer ?? connection.request.headers.origin ?? connection.client.request.headers.origin ?? `${protocol}://${host}`;
+    return new URL(url, origin);
+  }
+
+  async #getOrCreateContext(): Promise<Context> {
+    if (this.#context) return this.#context;
+    const { server, connection, onLoadContext } = this.#props;
+    const token = connection.handshake.auth.token ?? connection.handshake.headers.authorization?.toLowerCase()?.replace('bearer ', '');
+    this.#context = {
+      server,
+      client: this,
+      context: await onLoadContext({
+        token,
+      }, connection),
+    };
+    return this.#context;
+  }
+
+  async #saveContext(context: Context): Promise<Context> {
     const { connection, onSaveContext } = this.#props;
     return {
       ...context,
-      controllerContext: await onSaveContext(context.controllerContext, connection),
+      context: await onSaveContext(context.context, connection),
     };
   }
 
@@ -88,31 +92,27 @@ export class SocketApiClient {
     connection.emit('updateToken', token);
   }
 
-  #emit(eventName: string, payload: unknown): void {
-    this.#logger.silly('Sending to client', { eventName, payload });
-    this.#props.connection.emit(eventName, payload);
-  }
-
   async #execute(func: () => Promise<void>): Promise<void> {
     const context = await this.#getOrCreateContext();
     const originalContext = Object.clone(context);
     await executeWithContext(context, async () => {
       await func();
       const updatedContext = await this.#saveContext(context);
-      if (originalContext.controllerContext.token !== updatedContext.controllerContext.token) this.#handleTokenChanged(updatedContext.controllerContext.token);
+      if (originalContext.context.token !== updatedContext.context.token) this.#handleTokenChanged(updatedContext.context.token);
       this.#context = updatedContext;
     });
   }
 
-  async #executeApiRequest(eventName: string, ...args: unknown[]): Promise<void> {
+  async #executeApiRequest(eventName: string, ...rawArgs: unknown[]): Promise<void> {
     const { metadata } = this.#props;
     const eventNameParts = eventName.split('.');
-    if (eventNameParts.length < 2) throw new SocketAPIError({ message: `Invalid event name "${eventName}"`, meta: { eventName, args } });
+    if (eventNameParts.length < 2) throw new SocketAPIError({ message: `Invalid event name "${eventName}"`, meta: { eventName, args: rawArgs } });
     const [instanceName, methodName] = eventNameParts;
     const instanceMetadata = metadata.get(instanceName);
-    if (instanceMetadata == null) throw new SocketAPIError({ message: `No instance metadata found for event "${eventName}"`, meta: { eventName, args } });
+    if (instanceMetadata == null) throw new SocketAPIError({ message: `No instance metadata found for event "${eventName}"`, meta: { eventName, args: rawArgs } });
     const eventMetadata = instanceMetadata.methods.get(methodName);
-    if (eventMetadata == null) throw new SocketAPIError({ message: `No method metadata found for event "${eventName}"`, meta: { eventName, args } });
+    if (eventMetadata == null) throw new SocketAPIError({ message: `No method metadata found for event "${eventName}"`, meta: { eventName, args: rawArgs } });
+    const args = await this.#props.onHydrateArgs(rawArgs, eventMetadata);
     const func = eventMetadata.invoke;
     const response = is.function(args[args.length - 1]) ? args.pop() : undefined;
     await this.#execute(async () => {
@@ -128,28 +128,45 @@ export class SocketApiClient {
     });
   }
 
-  public registerQueryRequest(metadata: QueryRequestMetadata): void {
-    const hashes = this.#queries.get(metadata.instanceId) ?? new Map<string, QueryRequestMetadata>();
-    this.#queries.set(metadata.instanceId, hashes);
-    if (hashes.has(metadata.queryHash)) return;
-    hashes.set(metadata.queryHash, metadata);
-  }
-
-  public unregisterQueryRequest(instanceId: string, hash: string): void {
-    const hashes = this.#queries.get(instanceId);
-    if (!hashes || !hashes.has(hash)) return;
-    hashes.delete(hash);
-    if (hashes.size === 0) this.#queries.delete(instanceId);
-  }
-
-  public async processQueries(instanceId: string): Promise<void> {
-    const hashes = this.#queries.get(instanceId);
-    if (!hashes) return;
-    return this.#execute(async () => { await Promise.allSettled(Array.from(hashes.values()).map(({ invoke }) => invoke())); });
-  }
-
   public get IPAddress() { return this.#props.connection.handshake.address; }
 
   public get url() { return this.#url; }
+
+  public addRecordIds<T extends Record>(controllerName: string, recordsOrIds: (T | string)[]): void {
+    const currentIds = this.#recordIds.get(controllerName) ?? [];
+    const ids = recordsOrIds.map(recordOrId => typeof (recordOrId) === 'string' ? recordOrId : recordOrId.id);
+    this.#recordIds.set(controllerName, [...currentIds, ...ids].distinct());
+  }
+
+  public replaceAndUpdateToNewRecordsOnly<T extends Record>(controllerName: string, records: T[]): (T | string)[] {
+    const recordIds = this.#recordIds.get(controllerName) ?? [];
+    this.addRecordIds(controllerName, records);
+    return records.map(record => recordIds.includes(record.id) ? record.id : record);
+  }
+
+  public removeRecordIds(controllerName: string, ids: string[]): void {
+    const currentIds = this.#recordIds.get(controllerName) ?? [];
+    this.#recordIds.set(controllerName, currentIds.filter(id => !ids.includes(id)));
+  }
+
+  public broadcastStoreUpdates(storeName: string, updates: StoreControllerUpdate[]): void {
+    const records = this.#recordIds.get(storeName)!;
+    if (records === null) return;
+    const usefulUpdates = updates.filter(({ action, record }) => {
+      switch (action) {
+        case 'remove': {
+          if (!records.includes(record)) return false;
+          records.remove(record);
+          return true;
+        }
+        default: {
+          this.addRecordIds(storeName, [record]);
+          return true;
+        }
+      }
+    });
+    if (usefulUpdates.length === 0) return;
+    this.emit(`${storeName}.storeUpdate`, usefulUpdates);
+  }
 
 }

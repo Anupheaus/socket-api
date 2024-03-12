@@ -1,6 +1,6 @@
 import { contextAsyncStorage } from './contextAsyncStorage';
-import { SocketApiContext } from './contextModels';
+import { Context } from './contextModels';
 
-export function executeWithContext<T>(context: SocketApiContext, delegate: () => T): T {
+export function executeWithContext<T>(context: Context, delegate: () => T): T {
   return contextAsyncStorage.run(context, delegate);
 }

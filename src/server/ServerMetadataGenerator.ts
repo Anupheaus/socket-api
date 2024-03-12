@@ -1,12 +1,12 @@
 import { ClientController } from '../common';
 import { Controller } from './ServerController';
-import { ServerControllerMetadata, ServerControllerMethodMetadata } from './ServerModels';
+import { ControllerMetadata, ControllerMethodMetadata } from './ServerModels';
 import { StoreController } from './ServerStoreController';
 
-export function createMetadataFromControllers(controllers: Controller[]): Map<string, ServerControllerMetadata> {
+export function createMetadataFromControllers(controllers: Controller[]): Map<string, ControllerMetadata> {
   return new Map(controllers.map(controller => {
     const controllerType = controller.constructor as ClientController;
-    const methods = new Map(((controllerType.exposedToClient ?? []) as string[]).map((methodName): [string, ServerControllerMethodMetadata] => {
+    const methods = new Map(((controllerType.exposedToClient ?? []) as string[]).map((methodName): [string, ControllerMethodMetadata] => {
       return [methodName, {
         name: methodName,
         type: 'action',

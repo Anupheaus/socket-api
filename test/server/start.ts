@@ -1,5 +1,5 @@
 import Koa from 'koa';
-import { createLogger } from '../../src/common/logger';
+import { createLogger } from '../../src/common/CommonLogger';
 import { configureStaticFiles } from './static';
 import { configureViews } from './views';
 import readline from 'readline';

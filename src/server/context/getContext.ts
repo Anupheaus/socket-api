@@ -1,8 +1,8 @@
 import { SocketAPIError } from '../../common';
 import { contextAsyncStorage } from './contextAsyncStorage';
-import { SocketApiContext } from './contextModels';
+import { Context } from './contextModels';
 
-export function getContext(): SocketApiContext {
+export function getContext(): Context {
   const context = contextAsyncStorage.getStore();
   if (!context) throw new SocketAPIError({ message: 'Socket Api Context is not available' });
   return context;

@@ -1,6 +1,5 @@
-/* eslint-disable max-classes-per-file */
 import { Records } from '@anupheaus/common';
-import { Controller, StoreController, StoreRequest, StoreResponse } from '../../../src/server';
+import { Controller, StoreController, StoreControllerRequest, StoreControllerResponse, StoreControllerUpsertResponse } from '../../../src/server';
 import type { Book } from '../../common';
 
 export const BooksStore = Controller.configure(class BooksStore extends StoreController<Book> {
@@ -18,12 +17,12 @@ export const BooksStore = Controller.configure(class BooksStore extends StoreCon
 
   #books: Records<Book>;
 
-  public async doSomething(): Promise<void> {
-    /* do nothing */
+  public doSomething(_here: string): boolean {
+    return true;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected async handleRequest(request: StoreRequest<Book>): Promise<StoreResponse<Book>> {
+  protected async handleRequest(request?: StoreControllerRequest<Book>): Promise<StoreControllerResponse<Book>> {
     const data = this.#books.toArray();
     return {
       data,
@@ -31,9 +30,9 @@ export const BooksStore = Controller.configure(class BooksStore extends StoreCon
     };
   }
 
-  protected async handleUpsert(book: Book): Promise<Book> {
+  protected async handleUpsert(book: Book): Promise<StoreControllerUpsertResponse<Book>> {
     this.#books.upsert(book);
-    return book;
+    return { record: book, isNew: true };
   }
 
   protected async handleRemove(id: string): Promise<void> {

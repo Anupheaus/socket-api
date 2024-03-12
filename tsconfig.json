@@ -19,7 +19,10 @@
     "paths": {
       "react": [
         "./node_modules/@types/react"
-      ]
+      ],
+      "@anupheaus/common": [
+        "../common/src",
+      ],
     },
     "lib": [
       "DOM",

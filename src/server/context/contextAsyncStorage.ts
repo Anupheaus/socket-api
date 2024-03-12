@@ -1,4 +1,4 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import { SocketApiContext } from './contextModels';
+import { Context } from './contextModels';
 
-export const contextAsyncStorage = new AsyncLocalStorage<SocketApiContext>();
+export const contextAsyncStorage = new AsyncLocalStorage<Context>();

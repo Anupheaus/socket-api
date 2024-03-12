@@ -1,6 +1,7 @@
+import { Error } from '@anupheaus/common';
 import { SocketAPIError } from './SocketAPIError';
 
-type ErrorProps = ConstructorParameters<typeof SocketAPIError>[0];
+type ErrorProps = ConstructorParameters<typeof Error>[0];
 
 interface Props extends ErrorProps {
   controllerName: string;

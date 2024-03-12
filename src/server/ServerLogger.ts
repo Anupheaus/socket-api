@@ -1,3 +1,3 @@
-import { createLogger } from '../common/logger';
+import { createLogger } from '../common/CommonLogger';
 
 export const logger = createLogger('SocketAPIServer');
