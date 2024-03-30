@@ -52,16 +52,16 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
 
     globalListeners.set(controllerName, updates => {
       updates.forEach(update => {
-        const { action, record } = update;
-        if (is.plainObject(record)) update.record = onHydrateRecord(record as T, controllerName);
-        switch (action) {
-          case 'remove': store.delete(record); return;
+        switch (update.action) {
+          case 'remove': store.delete(update.record); return;
+          case 'push': update.records.forEach(record => store.set(record.id, onHydrateRecord(record as T, controllerName))); return;
+          default: update.record = onHydrateRecord(update.record as T, controllerName);
         }
       });
       listeners.forEach(listener => listener(updates as StoreControllerUpdate<T>[]));
     });
 
-    const useListener = (delegate?: (updates: StoreControllerUpdate<T>[]) => void | boolean) => {
+    const useListener = (delegate?: (updates: StoreControllerUpdate<T>[]) => PromiseMaybe<void | boolean>) => {
       const id = useId();
       const update = useForceUpdate();
 
@@ -137,22 +137,22 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
         let triggerNewRequest = false;
         const currentIds = data.ids();
 
-        updates.forEach(({ action, record }) => {
-          switch (action) {
+        updates.forEach(update => {
+          switch (update.action) {
             case 'create': {
               triggerNewRequest = true;
               break;
             }
             case 'update': {
-              if (currentIds.includes(record.id)) {
-                updatedRecords.push(record);
+              if (currentIds.includes(update.record.id)) {
+                updatedRecords.push(update.record);
               } else {
                 triggerNewRequest = true;
               }
               break;
             }
             case 'remove': {
-              const existingRecord = data.findById(record);
+              const existingRecord = data.findById(update.record);
               if (existingRecord != null) removeRecords.push(existingRecord);
               break;
             }
@@ -193,13 +193,39 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
     function useGet(idOrIds: string | string[] | undefined, props?: UseRequestProps): unknown {
       const singleIdRef = useRef(typeof (idOrIds) === 'string');
       const emptyResult = useRef<T[]>([]);
+      const idsRef = useRef<string[]>((is.array(idOrIds) ? idOrIds : [idOrIds]).removeNull().distinct());
+      const forceUpdate = useForceUpdate();
+
       const { response: records = emptyResult.current, isLoading, error, trigger } = useAsync((innerIds: string | string[] | undefined) => {
         let idsToUse = innerIds ?? idOrIds;
         if (typeof (idsToUse) === 'string') { singleIdRef.current = true; idsToUse = [idsToUse]; }
-        const ids = idsToUse?.distinct().removeNull();
+        const ids = idsToUse?.removeNull().distinct();
         if (!(ids instanceof Array) || ids.length === 0) return undefined;
+        idsRef.current = ids;
         return get(ids);
       }, [Object.hash({ idOrIds })], props);
+
+      useListener(async updates => {
+        let shouldTrigger = false;
+        updates.some(update => {
+          switch (update.action) {
+            case 'create':
+            case 'update': {
+              if (idsRef.current.includes(update.record.id)) shouldTrigger = true;
+              break;
+            }
+            case 'remove': {
+              if (idsRef.current.includes(update.record)) shouldTrigger = true;
+              break;
+            }
+          }
+          return shouldTrigger;
+        });
+        if (shouldTrigger) {
+          await trigger(idsRef.current);
+          forceUpdate(); // we do a manual update here because it is likely that the trigger will not cause a refresh (it thinks it is running sync because the response is immediate)
+        }
+      });
 
       return {
         ...(singleIdRef.current ? { record: records[0] } : { records }),
@@ -250,6 +276,12 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
       };
     };
 
+    const saveLocally = (record: T) => {
+      if (is.deepEqual(record, store.get(record.id))) return;
+      store.set(record.id, record);
+      listeners.forEach(listener => listener([{ action: 'update', record }]));
+    };
+
     return {
       request,
       useRequest,
@@ -260,6 +292,7 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
       remove,
       updateStoreWith: updateRecordsInStore,
       preloadRecords,
+      saveLocally,
     };
   };
 }

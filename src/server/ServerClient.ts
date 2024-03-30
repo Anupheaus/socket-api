@@ -150,17 +150,25 @@ export class Client {
   }
 
   public broadcastStoreUpdates(storeName: string, updates: StoreControllerUpdate[]): void {
-    const records = this.#recordIds.get(storeName)!;
-    if (records === null) return;
-    const usefulUpdates = updates.filter(({ action, record }) => {
-      switch (action) {
+    const recordIds = this.#recordIds.get(storeName)!;
+    if (recordIds == null) return;
+    const usefulUpdates = updates.filter(update => {
+      switch (update.action) {
         case 'remove': {
-          if (!records.includes(record)) return false;
-          records.remove(record);
+          if (!recordIds.includes(update.record)) return false;
+          recordIds.remove(update.record);
+          return true;
+        }
+        case 'push': {
+          update.records = update.records.filter(record => !recordIds.includes(record.id));
+          if (update.records.length === 0) return false;
+          this.addRecordIds(storeName, update.records);
+          recordIds.push(...update.records.ids());
           return true;
         }
         default: {
-          this.addRecordIds(storeName, [record]);
+          this.addRecordIds(storeName, [update.record]);
+          recordIds.push(update.record.id);
           return true;
         }
       }

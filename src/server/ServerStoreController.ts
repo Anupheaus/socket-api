@@ -17,6 +17,11 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
 
   protected abstract handleRemove(id: string): Promise<void>;
 
+  protected pushToClient(records: RecordType[]): void {
+    const { server } = getContext();
+    server.broadcastStoreUpdates(this.name, [{ action: 'push', records }]);
+  }
+
   private async storeGetRecords(ids: string[]): Promise<RecordType[]> {
     const { client } = getContext();
     const response = await this.handleRequest({ filters: { id: { $in: ids } } } as DataRequest<RecordType>);

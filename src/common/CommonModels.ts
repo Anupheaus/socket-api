@@ -25,4 +25,7 @@ export type StoreControllerUpdate<T extends Record = Record> = {
 } | {
   action: 'remove';
   record: string;
+} | {
+  action: 'push';
+  records: T[];
 };
