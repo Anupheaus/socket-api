@@ -1,6 +1,6 @@
 {
   "name": "@anupheaus/socket-api",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "main": "./dist/index.js",
   "repository": "https://github.com/Anupheaus/socket-api.git",
   "description": "Socket API",
