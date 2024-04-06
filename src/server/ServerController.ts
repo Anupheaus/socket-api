@@ -2,7 +2,7 @@ import { ConstructorOf } from '@anupheaus/common';
 import { ClientController, SocketAPIError } from '../common';
 import { ControllerContext, ControllerRequest } from './ServerModels';
 import { getContext } from './context';
-import type { Server } from './ServerServer';
+import type { InternalServer } from './ServerServer';
 
 type InstanceType<T> = T extends abstract new (...args: any) => infer R ? R : any;
 
@@ -13,7 +13,7 @@ interface ConfigureProps<ControllerType extends ConstructorOf<Controller>, Name 
 
 export class Controller<ContextType extends ControllerContext = ControllerContext> {
 
-  #parent?: Server;
+  #parent?: InternalServer;
 
   public static configure<ControllerType extends ConstructorOf<Controller>, Name extends string, PropsType extends ConfigureProps<ControllerType, Name>>(controller: ControllerType, props: PropsType) {
     const anyController = controller as ClientController<ControllerType, PropsType['exposeToClient'], PropsType['name']>;
@@ -40,6 +40,11 @@ export class Controller<ContextType extends ControllerContext = ControllerContex
     };
   }
 
+  protected get server() {
+    if (this.#parent == null) throw new SocketAPIError({ message: 'Server not set on controller' });
+    return this.#parent;
+  }
+
   protected emit(eventName: string, payload: unknown) {
     const client = getContext().client;
     client.emit(eventName, payload);
@@ -48,15 +53,13 @@ export class Controller<ContextType extends ControllerContext = ControllerContex
   protected get context(): ContextType { return getContext().context as ContextType; }
 
   protected useController<ControllerType extends ClientController<any, any>>(controller: ControllerType): InstanceType<ControllerType> {
-    const server = this.#parent;
-    if (server == null) throw new SocketAPIError({ message: 'Server not set on controller' });
     const typedController = controller as unknown as ClientController;
-    const foundController = server.getController(typedController.name);
+    const foundController = this.server.getController(typedController.name);
     if (!foundController) throw new SocketAPIError({ message: `Controller "${typedController.name}" not found` });
     return foundController as InstanceType<ControllerType>;
   }
 
-  private setParent(parent: Server): void {
+  private setParent(parent: InternalServer): void {
     this.#parent = parent;
   }
 

@@ -1,3 +1,4 @@
 export * from './contextModels';
 export * from './getContext';
-export * from './executeWithContext';
+export * from './executeWithClientContext';
+export * from './executeWithThinClientContext';

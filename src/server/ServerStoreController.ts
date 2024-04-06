@@ -18,15 +18,14 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
   protected abstract handleRemove(id: string): Promise<void>;
 
   protected pushToClient(records: RecordType[]): void {
-    const { server } = getContext();
-    server.broadcastStoreUpdates(this.name, [{ action: 'push', records }]);
+    this.server.broadcastStoreUpdates(this.name, [{ action: 'push', records }]);
   }
 
   private async storeGetRecords(ids: string[]): Promise<RecordType[]> {
     const { client } = getContext();
     const response = await this.handleRequest({ filters: { id: { $in: ids } } } as DataRequest<RecordType>);
     const records = response.data;
-    client.addRecordIds(this.name, records);
+    client.addRecordIds(this.name, records.ids());
     return records;
   }
 
@@ -43,18 +42,14 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
   }
 
   private async storeUpsert(record: Upsertable<RecordType>): Promise<RecordType> {
-    const { server } = getContext();
     const { record: updatedRecord, isNew } = await this.handleUpsert(record);
-    // client.addRecordIds(this.name, [updatedRecord]);
-    server.broadcastStoreUpdates(this.name, [{ action: isNew ? 'create' : 'update', record: updatedRecord }]);
+    this.server.broadcastStoreUpdates(this.name, [{ action: isNew ? 'create' : 'update', record: updatedRecord }]);
     return updatedRecord;
   }
 
   private async storeRemove(id: string): Promise<void> {
-    const { server } = getContext();
     await this.handleRemove(id);
-    // client.removeRecordIds(this.name, [id]);
-    server.broadcastStoreUpdates(this.name, [{ action: 'remove', record: id }]);
+    this.server.broadcastStoreUpdates(this.name, [{ action: 'remove', record: id }]);
   }
 
 }

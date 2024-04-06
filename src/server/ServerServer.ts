@@ -3,10 +3,11 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { createLogger } from '../common/CommonLogger';
 import { Client } from './ServerClient';
 import type { ControllerContext, ControllerMetadata } from './ServerModels';
-import { PromiseMaybe } from '@anupheaus/common';
+import { PromiseMaybe, bind } from '@anupheaus/common';
 import { Controller } from './ServerController';
 import { createMetadataFromControllers } from './ServerMetadataGenerator';
 import { ClientController, ControllerMethodMetadata, SocketAPIError, StoreControllerUpdate } from '../common';
+import { executeWithThinClientContext } from './context';
 
 const logger = createLogger('SocketApiServer');
 
@@ -19,7 +20,7 @@ export interface SocketApiServerProps {
   onHydrateArgs?(args: unknown[], metadata: ControllerMethodMetadata): PromiseMaybe<unknown[]>;
 }
 
-export class Server {
+export class InternalServer {
   constructor(props: SocketApiServerProps) {
     this.#props = {
       onLoadContext: context => context,
@@ -114,6 +115,7 @@ export class Server {
     });
   }
 
+  @bind
   public async emit(eventName: string, ...args: unknown[]): Promise<void> {
     if (this.#connection == null) return;
     logger.debug(`Emitting event "${eventName}" to all clients...`, { args });
@@ -126,7 +128,16 @@ export class Server {
 
 }
 
-export function createServer(config: SocketApiServerProps): void {
-  const server = new Server(config);
+function internalCreateServer(config: SocketApiServerProps) {
+  const server = new InternalServer(config);
   server.start();
+  return {
+    executeWithContext: <T, C extends ControllerContext>(context: C, delegate: () => T): T => executeWithThinClientContext(server, context, delegate),
+  };
+}
+
+export type Server = ReturnType<typeof internalCreateServer>;
+
+export function createServer(config: SocketApiServerProps): Server {
+  return internalCreateServer(config);
 }

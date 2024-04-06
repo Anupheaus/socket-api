@@ -55,13 +55,17 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
         switch (update.action) {
           case 'remove': store.delete(update.record); return;
           case 'push': update.records.forEach(record => store.set(record.id, onHydrateRecord(record as T, controllerName))); return;
-          default: update.record = onHydrateRecord(update.record as T, controllerName);
+          default: {
+            const updatedRecord = onHydrateRecord(update.record as T, controllerName);
+            store.set(updatedRecord.id, updatedRecord);
+            return;
+          }
         }
       });
       listeners.forEach(listener => listener(updates as StoreControllerUpdate<T>[]));
     });
 
-    const useListener = (delegate?: (updates: StoreControllerUpdate<T>[]) => PromiseMaybe<void | boolean>) => {
+    const useInternalListener = (delegate?: (updates: StoreControllerUpdate<T>[]) => PromiseMaybe<void | boolean>) => {
       const id = useId();
       const update = useForceUpdate();
 
@@ -131,7 +135,7 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
 
       const trigger = useBound(async (newRequestParams?: DataRequest<T>) => { await remakeRequest(newRequestParams); });
 
-      useListener(updates => batchUpdate(() => {
+      useInternalListener(updates => batchUpdate(() => {
         const updatedRecords: T[] = [];
         const removeRecords: T[] = [];
         let triggerNewRequest = false;
@@ -205,7 +209,7 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
         return get(ids);
       }, [Object.hash({ idOrIds })], props);
 
-      useListener(async updates => {
+      useInternalListener(async updates => {
         let shouldTrigger = false;
         updates.some(update => {
           switch (update.action) {
@@ -236,7 +240,7 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
     }
 
     const upsert = async (record: Upsertable<T>): Promise<T> => {
-      const newRecord = await invoke<T>('storeUpsert', record);
+      const newRecord = onHydrateRecord(await invoke<T>('storeUpsert', record), controllerName);
       await updateRecordsInStore([newRecord]);
       return newRecord;
     };
@@ -281,6 +285,14 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
       store.set(record.id, record);
       listeners.forEach(listener => listener([{ action: 'update', record }]));
     };
+
+    function useListener(delegate: (updates: StoreControllerUpdate<T>[]) => PromiseMaybe<void | boolean>): void;
+    function useListener(events: StoreControllerUpdate<T>['action'][], delegate: (updates: StoreControllerUpdate<T>[]) => PromiseMaybe<void | boolean>): void;
+    function useListener(...args: unknown[]): void {
+      const listenFor = (is.array(args[0]) ? args[0] : []) as StoreControllerUpdate<T>['action'][];
+      const delegate = (is.function(args[1]) ? args[1] : is.function(args[0]) ? args[0] : undefined) as ((updates: StoreControllerUpdate<T>[]) => PromiseMaybe<void | boolean>) | undefined;
+      useInternalListener(updates => (listenFor.length === 0 || updates.some(update => listenFor.includes(update.action))) ? delegate?.(updates) : void 0);
+    }
 
     return {
       request,

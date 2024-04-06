@@ -2,14 +2,14 @@ import { is, Logger, PromiseMaybe, Record } from '@anupheaus/common';
 import { createLogger } from '../common/CommonLogger';
 import { Socket } from 'socket.io';
 import { ControllerMethodMetadata, SocketAPIError, StoreControllerUpdate } from '../common';
-import { executeWithContext, Context } from './context';
+import { executeWithClientContext, Context } from './context';
 import type { ControllerContext, ControllerMetadata } from './ServerModels';
-import type { Server } from './ServerServer';
+import type { InternalServer } from './ServerServer';
 
 const logger = createLogger('SocketServerClient');
 
 interface Props {
-  server: Server;
+  server: InternalServer;
   connection: Socket;
   metadata: Map<string, ControllerMetadata>;
   onLoadContext(state: ControllerContext, client: Socket): PromiseMaybe<ControllerContext>;
@@ -55,10 +55,9 @@ export class Client {
 
   async #getOrCreateContext(): Promise<Context> {
     if (this.#context) return this.#context;
-    const { server, connection, onLoadContext } = this.#props;
+    const { connection, onLoadContext } = this.#props;
     const token = connection.handshake.auth.token ?? connection.handshake.headers.authorization?.toLowerCase()?.replace('bearer ', '');
     this.#context = {
-      server,
       client: this,
       context: await onLoadContext({
         token,
@@ -95,7 +94,7 @@ export class Client {
   async #execute(func: () => Promise<void>): Promise<void> {
     const context = await this.#getOrCreateContext();
     const originalContext = Object.clone(context);
-    await executeWithContext(context, async () => {
+    await executeWithClientContext(context, async () => {
       await func();
       const updatedContext = await this.#saveContext(context);
       if (originalContext.context.token !== updatedContext.context.token) this.#handleTokenChanged(updatedContext.context.token);
@@ -150,8 +149,7 @@ export class Client {
   }
 
   public broadcastStoreUpdates(storeName: string, updates: StoreControllerUpdate[]): void {
-    const recordIds = this.#recordIds.get(storeName)!;
-    if (recordIds == null) return;
+    const recordIds = this.#recordIds.get(storeName) ?? [];
     const usefulUpdates = updates.filter(update => {
       switch (update.action) {
         case 'remove': {

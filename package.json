@@ -19,8 +19,8 @@
   ],
   "typings": "dist/index",
   "dependencies": {
-    "@anupheaus/common": "link: ../common",
-    "@anupheaus/react-ui": "^0.0.29",
+    "@anupheaus/common": "^0.0.37",
+    "@anupheaus/react-ui": "^0.0.30",
     "luxon": "^3.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -71,10 +71,5 @@
     "webpack-node-externals": "^3.0.0",
     "@testing-library/react": "^14.2.0",
     "@testing-library/jest-dom": "^6.4.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@anupheaus/common": "^0.0.33"
-    }
   }
 }
