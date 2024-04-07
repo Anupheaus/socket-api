@@ -3,8 +3,8 @@
   "version": "0.0.19",
   "main": "./dist/index.js",
   "exports": {
-    "/server": "./dist/server.js",
-    "/client": "./dist/client.js"
+    "./server": "./dist/server.js",
+    "./client": "./dist/client.js"
   },
   "repository": "https://github.com/Anupheaus/socket-api.git",
   "description": "Socket API",
