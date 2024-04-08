@@ -8,8 +8,8 @@ dependencies:
     specifier: ^0.0.37
     version: 0.0.37
   '@anupheaus/react-ui':
-    specifier: ^0.0.31
-    version: 0.0.31(@types/react@18.2.45)
+    specifier: ^0.0.32
+    version: 0.0.32(@types/react@18.2.45)
   luxon:
     specifier: ^3.2.1
     version: 3.2.1
@@ -175,8 +175,8 @@ packages:
       object-hash: 3.0.0
       uuid: 9.0.1
 
-  /@anupheaus/react-ui@0.0.31(@types/react@18.2.45):
-    resolution: {integrity: sha512-bE4mONnuU3OK9YrSwQ/VLoqxhvAUwXq4Rjsgo6e19h1V2SXPO4kkPovlVzOiiZHXS4v4+G01+7Fka4AAUvra0g==, tarball: download/@anupheaus/react-ui/0.0.31/cf9338e55e234016f173ca1320fb79cb01866a50}
+  /@anupheaus/react-ui@0.0.32(@types/react@18.2.45):
+    resolution: {integrity: sha512-9DCazvLhf86pklPPlBbG+R0/pvkC5RrdE40N0At1HKKNxmJwvLYXo9p21ODc0GvBMaIVm+k/sEviR7/ktXEszA==, tarball: download/@anupheaus/react-ui/0.0.32/e67fd09803dbd69ff6f002c9269a46d25b136879}
     dependencies:
       '@anupheaus/common': 0.0.37
       '@emotion/react': 11.11.3(@types/react@18.2.45)(react@18.2.0)
