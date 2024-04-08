@@ -14,6 +14,16 @@
       "types": "./dist/client/index.d.ts"
     }
   },
+  "typesVersions": {
+    "*": {
+      "server": [
+        "./dist/server/index.d.ts"
+      ],
+      "client": [
+        "./dist/client/index.d.ts"
+      ]
+    }
+  },
   "repository": "https://github.com/Anupheaus/socket-api.git",
   "description": "Socket API",
   "author": "Anupheaus",
