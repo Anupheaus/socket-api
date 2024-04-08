@@ -18,6 +18,7 @@ const generateSettings = (name, isDev) => ({
   } : {}),
   output: {
     path: path.resolve(__dirname, './dist'),
+    libraryTarget: 'umd',
   },
   module: {
     rules: [{
