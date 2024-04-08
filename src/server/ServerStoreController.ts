@@ -21,6 +21,7 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
     this.server.broadcastStoreUpdates(this.name, [{ action: 'push', records }]);
   }
 
+  /* @ts-expect-error unused declaration */
   private async storeGetRecords(ids: string[]): Promise<RecordType[]> {
     const { client } = getContext();
     const response = await this.handleRequest({ filters: { id: { $in: ids } } } as DataRequest<RecordType>);
@@ -29,6 +30,7 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
     return records;
   }
 
+  /* @ts-expect-error unused declaration */
   private async storeRequest(request?: DataRequest<RecordType>): Promise<DataResponse<RecordType | string>> {
     const response = await this.handleRequest(request);
     const { client } = getContext();
@@ -41,12 +43,14 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
     };
   }
 
+  /* @ts-expect-error unused declaration */
   private async storeUpsert(record: Upsertable<RecordType>): Promise<RecordType> {
     const { record: updatedRecord, isNew } = await this.handleUpsert(record);
     this.server.broadcastStoreUpdates(this.name, [{ action: isNew ? 'create' : 'update', record: updatedRecord }]);
     return updatedRecord;
   }
 
+  /* @ts-expect-error unused declaration */
   private async storeRemove(id: string): Promise<void> {
     await this.handleRemove(id);
     this.server.broadcastStoreUpdates(this.name, [{ action: 'remove', record: id }]);

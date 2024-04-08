@@ -59,6 +59,7 @@ export class Controller<ContextType extends ControllerContext = ControllerContex
     return foundController as InstanceType<ControllerType>;
   }
 
+  /* @ts-expect-error unused declaration */
   private setParent(parent: InternalServer): void {
     this.#parent = parent;
   }

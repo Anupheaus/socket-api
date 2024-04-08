@@ -3,8 +3,16 @@
   "version": "0.0.20",
   "main": "./dist/index.js",
   "exports": {
-    "./server": "./dist/server.js",
-    "./client": "./dist/client.js"
+    "./server": {
+      "require": "./dist/server.js",
+      "import": "./dist/server.js",
+      "types": "./dist/server/index.d.ts"
+    },
+    "./client": {
+      "require": "./dist/client.js",
+      "import": "./dist/client.js",
+      "types": "./dist/client/index.d.ts"
+    }
   },
   "repository": "https://github.com/Anupheaus/socket-api.git",
   "description": "Socket API",
@@ -24,7 +32,7 @@
   "typings": "dist/index",
   "dependencies": {
     "@anupheaus/common": "^0.0.37",
-    "@anupheaus/react-ui": "^0.0.30",
+    "@anupheaus/react-ui": "^0.0.31",
     "luxon": "^3.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -75,5 +83,10 @@
     "webpack-node-externals": "^3.0.0",
     "@testing-library/react": "^14.2.0",
     "@testing-library/jest-dom": "^6.4.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@anupheaus/common": "^0.0.37"
+    }
   }
 }

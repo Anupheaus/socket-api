@@ -5,7 +5,7 @@ const CopyWebpackConfig = require('copy-webpack-plugin');
 const ProgressPlugin = require('progress-webpack-plugin');
 const HotModulePlugin = require('./WebpackHotReloadPlugin');
 const { DefinePlugin, ProvidePlugin } = require('webpack');
-const SocketAPIPlugin = require('./SocketAPIPlugin');
+// const SocketAPIPlugin = require('./SocketAPIPlugin');
 const dotenv = require('dotenv');
 
 const generateSettings = (name, isDev) => ({
@@ -38,7 +38,7 @@ const generateSettings = (name, isDev) => ({
     alias: {
       'react': path.join(__dirname, './node_modules/react'),
       'react-dom': path.join(__dirname, './node_modules/react-dom'),
-      '@anupheaus/common': path.join(__dirname, '../common/src'),
+      //'@anupheaus/common': path.join(__dirname, '../common/src'),
     },
   },
   plugins: [
@@ -125,17 +125,19 @@ module.exports = (env, argv) => {
     ],
     plugins: [
       ...(serverSettings.plugins ?? []),
-      ...(isDev ? [new NodemonPlugin()] : []),
-      new SocketAPIPlugin({
-        controllerRootPaths: [path.resolve(__dirname, './test/server/controllers')],
-        generatedControllerTypesFileName: path.resolve(__dirname, './test/common/ControllerTypes.ts'),
-      }),
-      new CopyWebpackConfig({
-        patterns: [
-          { from: './test/server/views', to: './views' },
-          // { from: './test/server/static', to: '.' },
-        ],
-      }),
+      ...(isDev ? [
+        new CopyWebpackConfig({
+          patterns: [
+            { from: './test/server/views', to: './views' },
+            // { from: './test/server/static', to: '.' },
+          ],
+        }),
+        new NodemonPlugin(),
+      ] : []),
+      // new SocketAPIPlugin({
+      //   controllerRootPaths: [path.resolve(__dirname, './test/server/controllers')],
+      //   generatedControllerTypesFileName: path.resolve(__dirname, './test/common/ControllerTypes.ts'),
+      // }),      
     ],
   }];
 

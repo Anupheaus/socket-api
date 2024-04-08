@@ -308,3 +308,9 @@ export function useCreateStoreController({ getSocket, useSocket }: UseCreateStor
     };
   };
 }
+
+class StoreControllerResponse<T extends Record> {
+  public getFunctions() { return useCreateStoreController(null as any)<T>(null as any); }
+}
+
+export type StoreControllerFunctions<T extends Record> = ReturnType<StoreControllerResponse<T>['getFunctions']>;
