@@ -14,6 +14,9 @@ dependencies:
   '@anupheaus/react-ui':
     specifier: ^0.0.34
     version: 0.0.34(@mui/system@5.15.6)(@types/react@18.2.45)
+  '@anupheaus/ssl-server':
+    specifier: ^0.0.5
+    version: 0.0.5
   luxon:
     specifier: ^3.2.1
     version: 3.2.1
@@ -40,9 +43,6 @@ dependencies:
     version: 9.6.0
 
 devDependencies:
-  '@anupheaus/ssl-server':
-    specifier: ^0.0.2
-    version: 0.0.2
   '@emotion/react':
     specifier: ^11.10.6
     version: 11.10.6(@types/react@18.2.45)(react@18.2.0)
@@ -178,6 +178,7 @@ packages:
       numeral: 2.0.6
       object-hash: 3.0.0
       uuid: 9.0.1
+    dev: false
 
   /@anupheaus/react-ui@0.0.34(@mui/system@5.15.6)(@types/react@18.2.45):
     resolution: {integrity: sha512-Gm7r3lSfdWQn+YjRO3I23eyfncYlbWD4ZiJM1v1P4344h4Pmjxi/c+y2bFyTUzP2vfLbV9Is4Nl5ynG/0B8nsg==}
@@ -213,13 +214,13 @@ packages:
       - moment-jalaali
     dev: false
 
-  /@anupheaus/ssl-server@0.0.2:
-    resolution: {integrity: sha512-EA94drdnheFF+yIK13YZLlAv86rqLzwAZoego/adjiqcC/32lp5BDuRveeiT7o0pXep9OPSma6tKSDmKBG2cIg==, tarball: https://registry.npmjs.org/download/@anupheaus/ssl-server/0.0.2/795a35fb3e909ed9a5707515c2496f405df156cf}
+  /@anupheaus/ssl-server@0.0.5:
+    resolution: {integrity: sha512-advLehs9VLUmD9xTpDHuCNQHF35W5WZo7Gkt0E3wtKvESv2BkvlXQPQbLZka8RYqWd3KJSxu/87V9Q7en6vZPQ==}
     dependencies:
       '@anupheaus/common': 0.0.41
-      luxon: 3.2.1
+      luxon: 3.4.4
       selfsigned-ca: 2.0.1
-    dev: true
+    dev: false
 
   /@babel/code-frame@7.18.6:
     resolution: {integrity: sha512-TDCmlK5eOvH+eH7cdAFlNXeVJqWIQ7gW9tY1GJIpUtFb6CmjVyq2VM3u71bOyR8CRihcCgMUYoDNyLXao3+70Q==}
@@ -2354,6 +2355,7 @@ packages:
     resolution: {integrity: sha512-OFuiuxebSQLGUgBVDZ4jfVaJBCO3EKRkBFovcyl4n6GDZ/d73neJ6xjYyLcyKS9uhr2ZnvkGZU9z+lD/2HwM8Q==}
     dependencies:
       node-forge: 0.7.6
+    dev: false
 
   /chai@4.4.1:
     resolution: {integrity: sha512-13sOfMv2+DWduEU+/xbun3LScLoqN17nBeTLUsmDfKdoiC1fr0n9PU4guu4AhRcOVFk/sW8LyZWHuhWtQZiF+g==}
@@ -2395,6 +2397,7 @@ packages:
   /chalk@5.3.0:
     resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+    dev: false
 
   /character-parser@2.2.0:
     resolution: {integrity: sha512-+UqJQjFEFaTAs3bNsF2j2kEN1baG/zghZbdqoYEDxGZtJo9LBzl1A+m0D4n3qKx8N2FNv8/Xp6yV9mQmBuptaw==}
@@ -2788,6 +2791,7 @@ packages:
   /dotenv@16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
+    dev: false
 
   /ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -3095,6 +3099,7 @@ packages:
 
   /fast-equals@4.0.3:
     resolution: {integrity: sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==}
+    dev: false
 
   /fast-glob@3.2.12:
     resolution: {integrity: sha512-DVj4CQIYYow0BlaelwK1pHl5n5cRSJfM60UA0zK891sVInoPri2Ekj7+e1CT3/3qxXenpI+nBBmQAcJPJgaj4w==}
@@ -3500,6 +3505,7 @@ packages:
   /inflection@3.0.0:
     resolution: {integrity: sha512-1zEJU1l19SgJlmwqsEyFTbScw/tkMHFenUo//Y0i+XEP83gDFdMvPizAD/WGcE+l1ku12PcTVHQhO6g5E0UCMw==}
     engines: {node: '>=18.0.0'}
+    dev: false
 
   /inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
@@ -4022,10 +4028,12 @@ packages:
   /luxon@3.2.1:
     resolution: {integrity: sha512-QrwPArQCNLAKGO/C+ZIilgIuDnEnKx5QYODdDtbFaxzsbZcc/a7WFq7MhsVYgRlwawLtvOUESTlfJ+hc/USqPg==}
     engines: {node: '>=12'}
+    dev: false
 
   /luxon@3.4.4:
     resolution: {integrity: sha512-zobTr7akeGHnv7eBOXcRgMeCP6+uyYsczwmeRCauvpvaAltgNyTbLH/+VaEAPUeWBT+1GuNmz4wC/6jtQzbbVA==}
     engines: {node: '>=12'}
+    dev: false
 
   /lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -4136,6 +4144,7 @@ packages:
 
   /node-forge@0.7.6:
     resolution: {integrity: sha512-sol30LUpz1jQFBjOKwbjxijiE3b6pjd74YwfD0fJOKPjF+fONKb2Yg8rYgS6+bK6VDl+/wfr4IYpC7jDzLUIfw==}
+    dev: false
 
   /node-releases@2.0.10:
     resolution: {integrity: sha512-5GFldHPXVG/YZmFzJvKK2zDSzPKhEp0+ZR5SVaoSag9fsL5YgHbUHDfnG5494ISANDcK4KwPXAx2xqVEydmd7w==}
@@ -4191,6 +4200,7 @@ packages:
 
   /numeral@2.0.6:
     resolution: {integrity: sha512-qaKRmtYPZ5qdw4jWJD6bxEf1FJEqllJrwxCLIm0sQU/A7v2/czigzOb+C2uSiFsa9lBUzeH7M1oK+Q+OLxL3kA==}
+    dev: false
 
   /nwsapi@2.2.7:
     resolution: {integrity: sha512-ub5E4+FBPKwAZx0UwIQOjYWGHTEq5sPqHQNRN8Z9e4A7u3Tj1weLJsL59yH9vmvqEtBHaOmT6cYQKIZOxp35FQ==}
@@ -4203,6 +4213,7 @@ packages:
   /object-hash@3.0.0:
     resolution: {integrity: sha512-RSn9F68PjH9HqtltsSnqYC1XXoWe9Bju5+213R98cNGttag9q9yAOTzdbsqvIa7aNm5WffBZFpWYr2aWrklWAw==}
     engines: {node: '>= 6'}
+    dev: false
 
   /object-inspect@1.13.1:
     resolution: {integrity: sha512-5qoj1RUiKOMsCCNLV1CBiPYE10sziTsnmNxkAI/rZhiD63CF7IqdFGC/XzjWjpSgLf0LxXX3bDFIh0E18f6UhQ==}
@@ -4867,6 +4878,7 @@ packages:
     dependencies:
       cert-store: 1.1.0
       node-forge: 0.7.6
+    dev: false
 
   /semver@5.7.1:
     resolution: {integrity: sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==}
@@ -5480,6 +5492,7 @@ packages:
   /uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
     hasBin: true
+    dev: false
 
   /v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
