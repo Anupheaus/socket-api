@@ -8,11 +8,13 @@ import { Controller } from './ServerController';
 import { createMetadataFromControllers } from './ServerMetadataGenerator';
 import { ClientController, ControllerMethodMetadata, SocketAPIError, StoreControllerUpdate } from '../common';
 import { executeWithThinClientContext } from './context';
+import { Http2SecureServer } from 'http2';
+import { Server as HttpServer } from 'http';
 
 const logger = createLogger('SocketApiServer');
 
 export interface SocketApiServerProps {
-  server: HttpsServer;
+  server: HttpsServer | Http2SecureServer | HttpServer;
   url: string;
   controllers: Controller[];
   onLoadContext?(context: ControllerContext, client: Socket): PromiseMaybe<ControllerContext>;
