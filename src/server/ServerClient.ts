@@ -66,11 +66,12 @@ export class Client {
     return this.#context;
   }
 
-  async #saveContext(context: Context): Promise<Context> {
+  async #saveContext(context: ControllerContext): Promise<Context> {
     const { connection, onSaveContext } = this.#props;
+    const newContext = await onSaveContext(context, connection);
     return {
-      ...context,
-      context: await onSaveContext(context.context, connection),
+      ...(await this.#getOrCreateContext()),
+      context: newContext,
     };
   }
 
@@ -93,12 +94,14 @@ export class Client {
 
   async #execute(func: () => Promise<void>): Promise<void> {
     const context = await this.#getOrCreateContext();
-    const originalContext = Object.clone(context);
+    const originalContext = Object.clone(context.context);
     await executeWithClientContext(context, async () => {
       await func();
-      const updatedContext = await this.#saveContext(context);
-      if (originalContext.context.token !== updatedContext.context.token) this.#handleTokenChanged(updatedContext.context.token);
-      this.#context = updatedContext;
+      if (originalContext.token !== context.context.token) this.#handleTokenChanged(context.context.token);
+      let updatedContext = Object.merge(this.#context?.context, context.context);
+      updatedContext = (await this.#saveContext(updatedContext)).context;
+      updatedContext = Object.merge(this.#context?.context, updatedContext);
+      this.#context = { ...this.#context, context: updatedContext } as Context;
     });
   }
 
