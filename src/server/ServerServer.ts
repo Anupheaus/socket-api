@@ -134,6 +134,7 @@ function internalCreateServer(config: SocketApiServerProps) {
   const server = new InternalServer(config);
   server.start();
   return {
+    controllers: config.controllers,
     executeWithContext: <T, C extends ControllerContext>(context: C, delegate: () => T): T => executeWithThinClientContext(server, context, delegate),
   };
 }
