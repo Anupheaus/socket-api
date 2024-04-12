@@ -99,13 +99,9 @@ export class Client {
       await func();
       if (originalContext.token !== context.context.token) this.#handleTokenChanged(context.context.token);
       let updatedContext = Object.merge(this.#context?.context, context.context);
-      console.log('1', Object.clone(updatedContext));
       updatedContext = (await this.#saveContext(updatedContext)).context;
-      console.log('2', Object.clone(updatedContext));
       updatedContext = Object.merge(this.#context?.context, updatedContext);
-      console.log('3', Object.clone(updatedContext));
       this.#context = { ...this.#context, context: updatedContext } as Context;
-      console.log('4', Object.clone(this.#context.context));
     });
   }
 
