@@ -125,6 +125,7 @@ export class InternalServer {
   }
 
   public broadcastStoreUpdates(storeName: string, updates: StoreControllerUpdate[]): void {
+    logger.debug('Broadcasting store updates', { storeName, updates, clients: this.#clients.size });
     this.#clients.forEach(client => client.broadcastStoreUpdates(storeName, updates));
   }
 

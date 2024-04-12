@@ -161,10 +161,12 @@ export class Client {
           return true;
         }
         case 'push': {
-          update.records = update.records.filter(record => !recordIds.includes(record.id));
-          if (update.records.length === 0) return false;
-          this.addRecordIds(storeName, update.records);
-          recordIds.push(...update.records.ids());
+          this.#logger.debug('Broadcasting store updates for records not already in the store', { storeName, updates, alreadyInStore: recordIds.length });
+          const recordsToSend = update.records.filter(record => !recordIds.includes(record.id));
+          this.#logger.debug('Checking number that are new to send', { storeName, numberOfRecordsToSend: recordsToSend.length });
+          if (recordsToSend.length === 0) return false;
+          this.addRecordIds(storeName, recordsToSend);
+          recordIds.push(...recordsToSend.ids());
           return true;
         }
         default: {
