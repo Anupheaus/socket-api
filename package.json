@@ -44,7 +44,7 @@
   ],
   "typings": "dist/index",
   "dependencies": {
-    "@anupheaus/common": "^0.0.41",
+    "@anupheaus/common": "^0.1.0",
     "@anupheaus/react-ui": "^0.0.34",
     "@anupheaus/ssl-server": "^0.0.5",
     "luxon": "^3.2.1",
@@ -99,7 +99,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@anupheaus/common": "^0.0.41"
+      "@anupheaus/common": "^0.1.0"
     }
   }
 }

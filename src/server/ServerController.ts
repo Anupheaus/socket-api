@@ -40,11 +40,6 @@ export class Controller<ContextType extends ControllerContext = ControllerContex
     };
   }
 
-  protected get server() {
-    if (this.#parent == null) throw new SocketAPIError({ message: 'Server not set on controller' });
-    return this.#parent;
-  }
-
   protected emit(eventName: string, payload: unknown) {
     const client = getContext().client;
     client.emit(eventName, payload);
@@ -57,6 +52,11 @@ export class Controller<ContextType extends ControllerContext = ControllerContex
     const foundController = this.server.getController(typedController.name);
     if (!foundController) throw new SocketAPIError({ message: `Controller "${typedController.name}" not found` });
     return foundController as InstanceType<ControllerType>;
+  }
+
+  private get server() {
+    if (this.#parent == null) throw new SocketAPIError({ message: 'Server not set on controller' });
+    return this.#parent;
   }
 
   /* @ts-expect-error unused declaration */

@@ -5,12 +5,12 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@anupheaus/common': ^0.0.41
+  '@anupheaus/common': ^0.1.0
 
 dependencies:
   '@anupheaus/common':
-    specifier: ^0.0.41
-    version: 0.0.41
+    specifier: ^0.1.0
+    version: 0.1.0
   '@anupheaus/react-ui':
     specifier: ^0.0.34
     version: 0.0.34(@mui/system@5.15.6)(@types/react@18.2.45)
@@ -167,8 +167,8 @@ packages:
     resolution: {integrity: sha512-rE0Pygv0sEZ4vBWHlAgJLGDU7Pm8xoO6p3wsEceb7GYAjScrOHpEo8KK/eVkAcnSM+slAEtXjA2JpdjLp4fJQQ==}
     dev: true
 
-  /@anupheaus/common@0.0.41:
-    resolution: {integrity: sha512-jfvN401wXHdSHTwY8a4CCAWozFrHWS4h1RSSgHtKvlQCabpCC28BLKHdxo/A12wYUucVZMbn+Aud8wHrGxAROA==}
+  /@anupheaus/common@0.1.0:
+    resolution: {integrity: sha512-IytXWuOzdHJWQvaArGmzTSfgmwrwXkwWrg01i0uPhaTyGMm8xXlzawhcjX1wpCTHnjhGzGh9I4VLpdrB3jK8dw==}
     dependencies:
       chalk: 5.3.0
       dotenv: 16.3.1
@@ -183,7 +183,7 @@ packages:
   /@anupheaus/react-ui@0.0.34(@mui/system@5.15.6)(@types/react@18.2.45):
     resolution: {integrity: sha512-Gm7r3lSfdWQn+YjRO3I23eyfncYlbWD4ZiJM1v1P4344h4Pmjxi/c+y2bFyTUzP2vfLbV9Is4Nl5ynG/0B8nsg==}
     dependencies:
-      '@anupheaus/common': 0.0.41
+      '@anupheaus/common': 0.1.0
       '@emotion/react': 11.11.3(@types/react@18.2.45)(react@18.2.0)
       '@emotion/styled': 11.11.0(@emotion/react@11.11.3)(@types/react@18.2.45)(react@18.2.0)
       '@mui/material': 5.15.6(@emotion/react@11.11.3)(@emotion/styled@11.11.0)(@types/react@18.2.45)(react-dom@18.2.0)(react@18.2.0)
@@ -217,7 +217,7 @@ packages:
   /@anupheaus/ssl-server@0.0.5:
     resolution: {integrity: sha512-advLehs9VLUmD9xTpDHuCNQHF35W5WZo7Gkt0E3wtKvESv2BkvlXQPQbLZka8RYqWd3KJSxu/87V9Q7en6vZPQ==}
     dependencies:
-      '@anupheaus/common': 0.0.41
+      '@anupheaus/common': 0.1.0
       luxon: 3.4.4
       selfsigned-ca: 2.0.1
     dev: false

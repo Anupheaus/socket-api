@@ -2,6 +2,7 @@ import { DataRequest, DataResponse, Record, Upsertable } from '@anupheaus/common
 import { ControllerContext, StoreControllerUpsertResponse } from './ServerModels';
 import { Controller } from './ServerController';
 import { getContext } from './context';
+import { InternalServer } from './ServerServer';
 
 export { StoreControllerUpsertResponse };
 
@@ -18,7 +19,18 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
   protected abstract handleRemove(id: string): Promise<void>;
 
   protected pushToClient(records: RecordType[]): void {
-    this.server.broadcastStoreUpdates(this.name, [{ action: 'push', records }]);
+    this.#server.broadcastStoreUpdates(this.name, [{ action: 'push', records }]);
+  }
+
+  protected async storeRemove(id: string): Promise<void> {
+    await this.handleRemove(id);
+    this.#server.broadcastStoreUpdates(this.name, [{ action: 'remove', record: id }]);
+  }
+
+  protected async storeUpsert(record: Upsertable<RecordType>): Promise<RecordType> {
+    const { record: updatedRecord, isNew } = await this.handleUpsert(record);
+    this.#server.broadcastStoreUpdates(this.name, [{ action: isNew ? 'create' : 'update', record: updatedRecord }]);
+    return updatedRecord;
   }
 
   /* @ts-expect-error unused declaration */
@@ -43,17 +55,8 @@ export abstract class StoreController<RecordType extends Record = Record, Contex
     };
   }
 
-  /* @ts-expect-error unused declaration */
-  private async storeUpsert(record: Upsertable<RecordType>): Promise<RecordType> {
-    const { record: updatedRecord, isNew } = await this.handleUpsert(record);
-    this.server.broadcastStoreUpdates(this.name, [{ action: isNew ? 'create' : 'update', record: updatedRecord }]);
-    return updatedRecord;
-  }
-
-  /* @ts-expect-error unused declaration */
-  private async storeRemove(id: string): Promise<void> {
-    await this.handleRemove(id);
-    this.server.broadcastStoreUpdates(this.name, [{ action: 'remove', record: id }]);
+  get #server() {
+    return (this as any).server as InternalServer;
   }
 
 }
