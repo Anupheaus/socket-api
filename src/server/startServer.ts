@@ -12,6 +12,7 @@ export interface ServerConfig {
   logger?: Logger;
   server: AnyHttpServer;
   privateKey?: string;
+  onStartup?(): PromiseMaybe<void>;
   onClientConnected?(client: Socket): PromiseMaybe<void>;
   onClientDisconnected?(client: Socket): PromiseMaybe<void>;
   onSavePrivateKey?(client: Socket, user: SocketAPIUser, privateKey: string): PromiseMaybe<void>;
@@ -29,7 +30,8 @@ export async function startServer(config: ServerConfig) {
   } = config;
   setupLogger(providedLogger);
   const app = setupKoa(server);
-  const onClientConnected = setupSocket(name);
+  const onClientConnected = setupSocket(name, server);
+  await config.onStartup?.();
   const internalActions = generateInternalActions();
   onClientConnected(async ({ client }) => {
     setupActions([...internalActions, ...(actions ?? [])]);

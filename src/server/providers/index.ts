@@ -1,4 +1,4 @@
-export * from './socket';
 export * from './logger';
 export * from './koa';
-export * from './authentication';
+export * from './useSocketAPI';
+export * from './socket';

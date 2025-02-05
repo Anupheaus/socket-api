@@ -1,1 +1,1 @@
-// export * from './useSocketAPIAuthentication';
+export * from './internalUseAuthentication';

@@ -1,21 +1,18 @@
 import '@anupheaus/common';
-import type { Socket } from 'socket.io';
 import { Server } from 'socket.io';
 import type { SocketContextProps } from './SocketContext';
 import { provideLogger, useLogger } from '../logger';
-import { useKoa } from '../koa';
 import { Context } from '../../contexts';
 import { SocketIOParser } from '../../../common';
-import { provideClient } from './provideClient';
 import { is } from '@anupheaus/common';
+import { provideSocket } from './internalUseSocket';
+import { provideData } from '../data';
+import type { AnyHttpServer } from '../../internalModels';
 
-const clientDataStore = new WeakMap<Socket, Map<string, any>>();
-
-export function setupSocket(name: string) {
+export function setupSocket(name: string, server: AnyHttpServer) {
   const logger = useLogger();
-  const { server } = useKoa();
 
-  logger.info('Connecting websocket...');
+  logger.info('Preparing websocket...');
   const socket = new Server(server, {
     path: `/${name}`,
     transports: ['websocket'],
@@ -26,20 +23,19 @@ export function setupSocket(name: string) {
     const onConnectedCallbacks = new Set<Parameters<SocketContextProps['onClientConnected']>[0]>();
     socket.on('connection', async client => {
       const clientLogger = logger.createSubLogger(client.id);
-      const clientData = clientDataStore.set(client, clientDataStore.get(client) ?? new Map()).get(client)!;
 
       clientLogger.info('Client connected', { IPAddress: client.handshake.address });
 
       const disconnectCallbacks = Array.from(onConnectedCallbacks)
-        .mapWithoutNull(provideLogger(clientLogger, provideClient({ client, data: clientData }, callback => callback({ client }))));
+        .mapWithoutNull(provideLogger(clientLogger, provideSocket(client, provideData(client, callback => callback({ client })))));
 
       client.on('disconnect', () => {
         clientLogger.info('Client disconnected');
-        provideLogger(clientLogger, provideClient({ client, data: clientData }, () => disconnectCallbacks.forEach(async potentialCb => {
+        provideLogger(clientLogger, provideSocket(client, provideData(client, () => disconnectCallbacks.forEach(async potentialCb => {
           const cb = await potentialCb;
           if (!is.function(cb)) return;
           cb();
-        })));
+        }))));
       });
     });
 
@@ -52,9 +48,21 @@ export function setupSocket(name: string) {
       onClientConnected,
     });
 
-    logger.info('Websocket ready.');
+    logger.info('Websocket ready, waiting for the server to start...');
+
+    server.on('listening', () => {
+      const address = server.address();
+      const port = is.string(address) ? undefined : address?.port;
+      logger.info(`Websocket listening on port ${port}.`);
+    });
+
+    server.on('close', () => {
+      logger.info('Websocket closed due to the server being closed.');
+    });
 
     return onClientConnected;
+
+
   } finally {
     // socket.close();
   }
