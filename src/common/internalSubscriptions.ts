@@ -1,4 +1,5 @@
 import { defineSubscription } from './defineSubscription';
-import type { QueryRequest, QueryResponse } from './models';
+import type { SocketAPISubscriptionRequest, SocketAPISubscriptionResponse } from './internalModels';
 
-export const mxdbQuerySubscription = defineSubscription<QueryRequest, QueryResponse>()('mxdbQuerySubscription');
+
+export const mxdbQuerySubscription = defineSubscription<SocketAPISubscriptionRequest, SocketAPISubscriptionResponse>()('mxdbQuerySubscription');

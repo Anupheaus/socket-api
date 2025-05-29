@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, createComponent, createStyles, Flex } from '@anupheaus/react-ui';
-import { useSocketAPI } from '../../src/client';
+import { useSocket } from '../../src/client';
 
 const useStyles = createStyles({
   connectionStatus: {
@@ -16,7 +16,7 @@ const useStyles = createStyles({
 
 export const ConnectionTest = createComponent('ConnectionTest', () => {
   const { css, join } = useStyles();
-  const { onConnectionStateChange, testDisconnect, testReconnect } = useSocketAPI();
+  const { onConnectionStateChange, testDisconnect, testReconnect } = useSocket();
   const [isConnected, setIsConnected] = useState(false);
   onConnectionStateChange(newIsConnected => setIsConnected(newIsConnected));
 

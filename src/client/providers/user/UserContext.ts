@@ -5,11 +5,11 @@ import type { DistributedState } from '@anupheaus/react-ui';
 export interface UserContextType {
   isValid: boolean;
   userState: DistributedState<SocketAPIUser | undefined>;
-  signOut(): void;
+  signOut(): Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType>({
   isValid: false,
   userState: undefined as unknown as DistributedState<SocketAPIUser | undefined>,
-  signOut: () => void 0,
+  signOut: () => Promise.resolve(),
 });

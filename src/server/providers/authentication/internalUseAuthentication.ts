@@ -1,4 +1,4 @@
-import type { MakePromise } from '@anupheaus/common';
+import type { AnyObject, MakePromise } from '@anupheaus/common';
 import type { SocketAPIUser } from '../../../common';
 import { socketAPIUserAuthenticated, socketAPIUserSignOut } from '../../../common/internalEvents';
 import { useEvent } from '../../events';
@@ -14,8 +14,8 @@ interface SocketAPIAuthenticationData<UserType extends SocketAPIUser> {
   publicKey?: string;
 }
 
-export function internalUseAuthentication<UserType extends SocketAPIUser = SocketAPIUser>() {
-  const { getData } = internalUseData();
+export function internalUseAuthentication<UserType extends SocketAPIUser = SocketAPIUser>(target?: AnyObject) {
+  const { getData } = internalUseData(target);
 
   function getUser() {
     return getData<SocketAPIAuthenticationData<UserType>>('socket-api-authentication', () => ({})).user;
@@ -78,8 +78,8 @@ export function internalUseAuthentication<UserType extends SocketAPIUser = Socke
   }
 
   function impersonateUser<ImpersonatedUserType extends SocketAPIUser, T>(user: ImpersonatedUserType, handler: () => T): MakePromise<T> {
-    const target = {};
-    return provideData(target, async () => {
+    const newTarget = {};
+    return provideData(newTarget, async () => {
       await setUserInternally(user as unknown as UserType, true);
       return handler();
     })() as MakePromise<T>;

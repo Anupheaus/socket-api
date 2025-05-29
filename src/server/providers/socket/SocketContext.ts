@@ -7,5 +7,5 @@ export interface SocketClientConnectedProps {
 
 export interface SocketContextProps {
   socket: Server;
-  onClientConnected(callback: (props: SocketClientConnectedProps) => PromiseMaybe<(() => void) | void>): void;
+  onClientConnected(callback: (props: SocketClientConnectedProps) => PromiseMaybe<((client: Socket) => void) | void>): void;
 }

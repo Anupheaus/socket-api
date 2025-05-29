@@ -1,45 +1,71 @@
-import { useContext } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { SocketContext } from './SocketContext';
-import { useBound } from '@anupheaus/react-ui';
+import { useBound, useId, useLogger } from '@anupheaus/react-ui';
 import { InternalError } from '@anupheaus/common';
 import type { Socket } from 'socket.io-client';
 
 export function useSocket() {
-  const { getSocket, onConnectionStateChange, testDisconnect, testReconnect, on } = useContext(SocketContext);
-  const isConnected = useBound(() => {
+  const logger = useLogger();
+  const { getSocket, onConnectionStateChanged, testDisconnect, testReconnect, on: contextOn } = useContext(SocketContext);
+  const hookId = useId();
+  const connectedCallback = useRef<(socket: Socket) => void>();
+  const disconnectedCallback = useRef<() => void>();
+
+  const getIsConnected = useBound(() => {
     const sck = getSocket();
     return sck != null && sck.connected === true;
+  });
+
+  const [isConnected, setIsConnected] = useState(() => getIsConnected());
+  const updateWhenChangedRef = useRef(false);
+  const [clientId, setClientId] = useState(() => getIsConnected() ? getSocket()?.id : undefined);
+
+  onConnectionStateChanged((newIsConnected, socket) => {
+    if (connectedCallback.current != null && socket != null && socket.connected === true) connectedCallback.current(socket);
+    if (disconnectedCallback.current != null && socket != null && socket.connected === false) disconnectedCallback.current();
+    if (!updateWhenChangedRef.current) return;
+    setClientId(socket?.id);
+    setIsConnected(newIsConnected);
   });
 
   const emit = useBound(async <ReturnType = void, DataType = unknown>(event: string, data: DataType): Promise<ReturnType> => {
     const socket = getSocket();
     if (socket == null) throw new InternalError('Socket is not connected');
-    return socket.emitWithAck(event, data);
+    try {
+      return socket.emitWithAck(event, data);
+    } catch (error) {
+      logger.error('Failed to emit an event using socket.io', { error });
+      throw error;
+    }
   });
 
-  // const on = useBound(<DataType = unknown, ReturnType = unknown>(event: string, callback: (data: DataType) => ReturnType) => onConnectionStateChange((isNowConnected, socket) => {
-  //   if (!isNowConnected || socket == null) return;
-  //   console.log('registering on event', { event, isNowConnected });
-  //   socket.off(event);        
-  //   socket.on(event, (data, response) => {
-  //     console.log('on event called', { event, data });
-  //     return response(callback(data));
-  //   });
-  // }));
+  const on = useBound(<DataType = unknown, ReturnType = unknown>(event: string, callback: (data: DataType) => ReturnType) => contextOn(hookId, event, callback));
 
-  const onConnected = (callback: (socket: Socket) => void, debugId?: string) => onConnectionStateChange((_result, socket) => {
-    if (socket) callback(socket);
-  }, debugId);
+  const onConnected = (callback: (socket: Socket) => void) => {
+    const shouldCall = connectedCallback.current == null;
+    connectedCallback.current = callback;
+    if (!shouldCall) return;
+    const socket = getSocket();
+    if (socket == null || socket.connected === false) return;
+    callback(socket);
+  };
 
-  const onDisconnected = (callback: () => void) => onConnectionStateChange((_result, socket) => {
-    if (socket == null) callback();
-  });
+  const onDisconnected = (callback: () => void) => {
+    const shouldCall = disconnectedCallback.current == null;
+    disconnectedCallback.current = callback;
+    if (!shouldCall) return;
+    const socket = getSocket();
+    if (socket != null && socket.connected === true) return;
+    callback();
+  };
 
   return {
-    isConnected,
+    get isConnected() { updateWhenChangedRef.current = true; return isConnected; },
+    get clientId() { updateWhenChangedRef.current = true; return clientId; },
+    getIsConnected,
     onConnected,
     onDisconnected,
-    onConnectionStateChange,
+    onConnectionStateChanged,
     getSocket,
     emit,
     on,

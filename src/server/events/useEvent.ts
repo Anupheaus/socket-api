@@ -6,8 +6,8 @@ import { useSocketAPI } from '../providers';
 export function useEvent<T>(event: SocketAPIEvent<T>) {
   const { getClient } = useSocketAPI();
 
-  return (payload: T) => {
+  return async (payload: T) => {
     const client = getClient(true);
-    client.emitWithAck(`${eventPrefix}.${event.name}`, payload);
+    await client.emitWithAck(`${eventPrefix}.${event.name}`, payload);
   };
 }

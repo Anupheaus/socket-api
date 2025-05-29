@@ -1,32 +1,39 @@
-import { createComponent, useBound, useId, useMap, useOnUnmount } from '@anupheaus/react-ui';
+import { createComponent, useBound, useId, useLogger, useMap, useOnUnmount } from '@anupheaus/react-ui';
 import type { ReactNode } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
-import { io } from 'socket.io-client';
 import type { SocketContextProps } from './SocketContext';
 import { SocketContext } from './SocketContext';
-import { SocketIOParser } from '../../../common';
-import { useLogger } from '../../logger';
-import { InternalError, type AnyFunction } from '@anupheaus/common';
+import type { Unsubscribe } from '@anupheaus/common';
+import { InternalError, Logger, type AnyFunction } from '@anupheaus/common';
+import { createClientSocket } from './createClientSocket';
 
 interface CallbackRecord {
   callback: (isConnected: boolean, socket: Socket | undefined) => void;
   debugId?: string;
 }
 
+interface EventHandler {
+  socketHandler: AnyFunction;
+  handlers: Map<string, AnyFunction>;
+}
+
 interface Props {
+  host?: string;
   name: string;
   children?: ReactNode;
 }
 
 export const SocketProvider = createComponent('SocketProvider', ({
+  host,
   name,
   children,
 }: Props) => {
   const logger = useLogger();
-  const customEvents = useMap<string, AnyFunction>();
+  const registeredEvents = useMap<string, EventHandler>();
   const [uniqueConnectionId, setUniqueConnectionId] = useState('');
   const socketRef = useRef<Socket>();
+  const unsubscribeListenerRef = useRef<Unsubscribe>(() => void 0);
 
   const getSocket = () => {
     const sck = socketRef.current;
@@ -37,37 +44,49 @@ export const SocketProvider = createComponent('SocketProvider', ({
   useMemo(() => {
     if (socketRef.current?.connected) disconnectSocket();
     logger.info('Connecting socket to server...');
-    const sck = io({ path: `/${name}`, transports: ['websocket'], parser: new SocketIOParser({ logger }), forceNew: true, autoConnect: false });
+    const sck = createClientSocket(host, name, logger);
     let isConnected = false;
 
     sck.on('connect', () => {
       if (isConnected) return; // prevent multiple calls
       isConnected = true;
+      unsubscribeListenerRef.current();
+      unsubscribeListenerRef.current = Logger.registerListener({
+        sendInterval: {
+          seconds: 2,
+        },
+        maxEntries: 100,
+        onTrigger: entries => {
+          const socket = getSocket();
+          socket.emit('mxdb.log', entries);
+        },
+      });
       logger.debug('Socket connected to server', { id: sck.id });
       connectionCallbacks.forEach(({ callback, debugId }, callbackId) => {
-        logger.silly('Calling connection state change callback from connect', { callbackId, debugId, connected: true });
+        if (debugId) logger.silly('Calling connection state change callback from connect', { callbackId, debugId, connected: true });
         callback(true, sck);
       });
     });
     sck.on('disconnect', () => {
       if (!isConnected) return; // prevent multiple calls
       isConnected = false;
+      unsubscribeListenerRef.current();
       logger.debug('Socket disconnected from server', { id: sck.id });
       connectionCallbacks.forEach(({ callback, debugId }, callbackId) => {
-        logger.silly('Calling connection state change callback from connect', { callbackId, debugId, connected: false });
+        if (debugId) logger.silly('Calling connection state change callback from connect', { callbackId, debugId, connected: false });
         callback(false, undefined);
       });
     });
-    sck.on('connect_error', error => logger.error('Socket connection error', { error }));
+    sck.on('connect_error', error => logger.error(`Socket connection error: ${error.message}`, { error }));
     if (uniqueConnectionId === '') sck.connect(); // only connect if the unique connection id is not set
     socketRef.current = sck;
   }, [uniqueConnectionId, name]);
+
   const connectionCallbacks = useMap<string, CallbackRecord>();
 
   const disconnectSocket = useBound(() => {
     const socket = getSocket();
-    Array.from(customEvents.entries()).forEach(([event, handler]) => socket.removeListener(event, handler));
-    customEvents.clear();
+    Array.from(registeredEvents.entries()).forEach(([event, { socketHandler }]) => socket.removeListener(event, socketHandler));
     socket.disconnect();
   });
 
@@ -76,17 +95,17 @@ export const SocketProvider = createComponent('SocketProvider', ({
       const socket = getSocket();
       if (socket.connected) return socket;
     },
-    onConnectionStateChange(callback, debugId) {
+    onConnectionStateChanged(callback, debugId) {
       const callbackId = useId();
       const boundCallback = useBound(callback);
-      logger.silly('Registering connection state change callback', { callbackId, debugId });
+      if (debugId) logger.silly('Registering connection state change callback', { callbackId, debugId });
       connectionCallbacks.set(callbackId, { callback: boundCallback, debugId });
       useLayoutEffect(() => {
         const socket = getSocket();
-        logger.silly('Calling connection state change callback', { callbackId, debugId, connected: socket.connected });
+        if (debugId) logger.silly('Calling connection state change callback', { callbackId, debugId, connected: socket.connected });
         if (socket.connected) boundCallback(true, socket); else boundCallback(false, undefined);
         return () => {
-          logger.silly('Deleting connection state change callback', { callbackId, debugId });
+          if (debugId) logger.silly('Deleting connection state change callback', { callbackId, debugId });
           connectionCallbacks.delete(callbackId);
         };
       }, []);
@@ -100,19 +119,28 @@ export const SocketProvider = createComponent('SocketProvider', ({
       if (socket.connected) return;
       socket.connect();
     },
-    on(event, callback) {
-      context.onConnectionStateChange(isConnected => {
-        const socket = getSocket();
-        const previousHandler = customEvents.get(event);
-        if (previousHandler != null) socket.removeListener(event, previousHandler);
-        customEvents.delete(event);
-        if (!isConnected) return;
-        const handler = (data: any, response: AnyFunction) => response(callback(data));
-        customEvents.set(event, handler);
-        socket.on(event, handler);
-      });
+    on(hookId, event, handler) {
+      const callbackId = `${hookId}-${event}`;
+      let registeredEvent = registeredEvents.get(event);
+      if (registeredEvent == null) {
+        const handlers = new Map<string, AnyFunction>();
+        registeredEvent = {
+          handlers,
+          socketHandler: async (data: any, response: AnyFunction) => response(await Promise.whenAllSettled(Array.from(handlers.values()).map(innerHandler => innerHandler(data)))),
+        };
+        registeredEvents.set(event, registeredEvent);
+        const callback = (isConnected: boolean, socket: Socket | undefined) => {
+          if (!isConnected || socket == null) return;
+          socket.on(event, registeredEvent!.socketHandler);
+        };
+        connectionCallbacks.set(event, { callback });
+        const localSocket = getSocket();
+        callback(localSocket.connected, localSocket);
+      }
+      registeredEvent.handlers.set(callbackId, handler);
     },
   }), []);
+
 
   useOnUnmount(() => disconnectSocket());
 

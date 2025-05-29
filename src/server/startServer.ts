@@ -1,17 +1,23 @@
-import type { Logger, PromiseMaybe } from '@anupheaus/common';
+import type { PromiseMaybe } from '@anupheaus/common';
+import { Logger } from '@anupheaus/common';
 import { setServerConfig, type AnyHttpServer } from './internalModels';
-import { setupSocket, setupLogger, setupKoa } from './providers';
+import { setupSocket, setupKoa } from './providers';
 import type { SocketAPIServerAction } from './actions';
-import { generateInternalActions, setupActions } from './actions';
+import { generateInternalActions } from './actions';
 import type { Socket } from 'socket.io';
-import type { SocketAPIUser } from '../common';
+import type { SocketAPIClientLoggingService, SocketAPIUser } from '../common';
+import type { SocketAPIServerSubscription } from './subscriptions';
+import { setupHandlers } from './handler';
 
 export interface ServerConfig {
   name: string;
   actions?: SocketAPIServerAction[];
+  subscriptions?: SocketAPIServerSubscription[];
   logger?: Logger;
   server: AnyHttpServer;
-  privateKey?: string;
+  privateKey?: string; // used for encrypting the jwt tokens
+  clientLoggingService?: SocketAPIClientLoggingService;
+  contextWrapper?<R>(delegate: () => (R | void)): (R | void);
   onStartup?(): PromiseMaybe<void>;
   onClientConnected?(client: Socket): PromiseMaybe<void>;
   onClientDisconnected?(client: Socket): PromiseMaybe<void>;
@@ -25,19 +31,27 @@ export async function startServer(config: ServerConfig) {
     name,
     server,
     actions,
+    subscriptions,
     logger: providedLogger,
+    clientLoggingService,
     onClientConnected: propsOnClientConnected,
+    onClientDisconnected,
   } = config;
-  setupLogger(providedLogger);
-  const app = setupKoa(server);
-  const onClientConnected = setupSocket(name, server);
-  await config.onStartup?.();
-  const internalActions = generateInternalActions();
-  onClientConnected(async ({ client }) => {
-    setupActions([...internalActions, ...(actions ?? [])]);
-    await propsOnClientConnected?.(client);
+  const logger = providedLogger ?? new Logger('MXDB_Sync');
+  return logger.provide(async () => {
+    const app = setupKoa(server);
+    const onClientConnected = setupSocket(name, server, logger, clientLoggingService);
+    const contextWrapper = config.contextWrapper ?? (delegate => delegate());
+    if (config.onStartup) await contextWrapper(config.onStartup);
+    const internalActions = generateInternalActions();
+    onClientConnected(({ client }) => contextWrapper(() => {
+      setupHandlers([...internalActions, ...(actions ?? []), ...(subscriptions ?? [])]);
+      propsOnClientConnected?.(client);
+      return innerClient => contextWrapper(() => onClientDisconnected?.(innerClient));
+    }));
+
+    return {
+      app,
+    };
   });
-  return {
-    app,
-  };
 }

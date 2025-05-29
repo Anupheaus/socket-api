@@ -31,7 +31,7 @@ export const AuthenticationProvider = createComponent('AuthenticationProvider', 
   const onUserAuthenticated = useEvent(socketAPIUserAuthenticated);
   const onUserSignOut = useEvent(socketAPIUserSignOut);
 
-  const signOut = useBound(() => {
+  const signOut = useBound(async () => {
     setToken(undefined);
     setUser(undefined);
   });

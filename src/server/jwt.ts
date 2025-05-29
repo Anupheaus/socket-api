@@ -14,8 +14,8 @@ function extractUserFromToken(token: string, key: string): SocketAPIUser | undef
   try {
     const pemKey = Buffer.from(key, 'base64').toString('utf-8');
     const data = JWT.verify(token, pemKey, { issuer: 'socket-api', audience: 'socket-api' });
-    if (is.string(data)) throw new InternalError('The format of the token is invalid.');
-    return data as SocketAPIUser;
+    if (is.string(data) || !is.plainObject(data) || !('user' in data)) throw new InternalError('The format of the token is invalid.');
+    return data.user as SocketAPIUser;
   } catch (e) {
     if (e instanceof JWT.TokenExpiredError) {
       return;
@@ -51,7 +51,7 @@ function createTokenFromUser(user: SocketAPIUser, providedPrivateKey?: string): 
     }
   })();
 
-  const token = JWT.sign(user, rawPrivateKey, {
+  const token = JWT.sign({ user }, rawPrivateKey, {
     algorithm: 'ES256',
     issuer: 'socket-api',
     audience: 'socket-api',

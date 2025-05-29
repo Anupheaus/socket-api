@@ -1,3 +1,4 @@
+import type { PromiseMaybe } from '@anupheaus/common';
 import type { SocketAPIEvent } from '../../common';
 import { eventPrefix } from '../../common/internalModels';
 import { useSocket } from '../providers';
@@ -7,9 +8,9 @@ export type GetUseEventType<EventType extends SocketAPIEvent<any>> = EventType e
 
 export function useEvent<T>(event: SocketAPIEvent<T>) {
   const { on } = useSocket();
-  const handlerRef = useRef<(payload: T) => void>(() => void 0);
+  const handlerRef = useRef<(payload: T) => PromiseMaybe<void>>(() => void 0);
 
   on<T>(`${eventPrefix}.${event.name}`, payload => handlerRef.current(payload));
 
-  return (handler: (payload: T) => void) => { handlerRef.current = handler; };
+  return (handler: (payload: T) => PromiseMaybe<void>) => { handlerRef.current = handler; };
 }
