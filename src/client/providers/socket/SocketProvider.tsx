@@ -126,7 +126,7 @@ export const SocketProvider = createComponent('SocketProvider', ({
         const handlers = new Map<string, AnyFunction>();
         registeredEvent = {
           handlers,
-          socketHandler: async (data: any, response: AnyFunction) => response(await Promise.whenAllSettled(Array.from(handlers.values()).map(innerHandler => innerHandler(data)))),
+          socketHandler: async (data: any, response: AnyFunction) => response(await Array.from(handlers.values()).mapAsync(innerHandler => innerHandler(data))),
         };
         registeredEvents.set(event, registeredEvent);
         const callback = (isConnected: boolean, socket: Socket | undefined) => {
