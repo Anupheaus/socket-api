@@ -61,7 +61,7 @@ export const SocketProvider = createComponent('SocketProvider', ({
           socket.emit('mxdb.log', entries);
         },
       });
-      logger.debug('Socket connected to server', { id: sck.id });
+      logger.always('Socket connected to server', { id: sck.id });
       connectionCallbacks.forEach(({ callback, debugId }, callbackId) => {
         if (debugId) logger.silly('Calling connection state change callback from connect', { callbackId, debugId, connected: true });
         callback(true, sck);

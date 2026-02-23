@@ -34,6 +34,7 @@
   "author": "Anupheaus",
   "license": "Apache-2.0",
   "publishConfig": {
+    "registry": "https://npm.pkg.github.com/",
     "access": "public"
   },
   "private": false,
@@ -42,15 +43,18 @@
     "start": "webpack --mode development",
     "server": "webpack --mode development --name server",
     "client": "webpack --mode development --name client --profile",
-    "test": "vitest --environment jsdom"
+    "test": "vitest run",
+    "test-ci": "vitest run",
+    "test:e2e": "vitest run e2e/"
   },
   "files": [
-    "dist"
+    "dist",
+    "AGENTS.md"
   ],
   "typings": "dist/index",
   "dependencies": {
-    "@anupheaus/common": "file:../common",
-    "@anupheaus/react-ui": "file:../react-ui",
+    "@anupheaus/common": "^0.1.29",
+    "@anupheaus/react-ui": "^0.0.60",
     "axios": "^1.9.0",
     "luxon": "^3.2.1",
     "react": "^18.2.0",
@@ -108,5 +112,11 @@
     "webpack-cli": "^5.1.4",
     "webpack-inject-plugin": "^1.5.5",
     "webpack-node-externals": "^3.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@anupheaus/common": "file:../common",
+      "@anupheaus/react-ui": "file:../react-ui"
+    }
   }
 }

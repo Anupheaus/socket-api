@@ -15,7 +15,7 @@ export interface ServerConfig {
   subscriptions?: SocketAPIServerSubscription[];
   logger?: Logger;
   server: AnyHttpServer;
-  privateKey?: string; // used for encrypting the jwt tokens
+  privateKey?: string; // used for encrypting the jwt tokens  
   clientLoggingService?: SocketAPIClientLoggingService;
   contextWrapper?<R>(delegate: () => (R | void)): (R | void);
   onStartup?(): PromiseMaybe<void>;

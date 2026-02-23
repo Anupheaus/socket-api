@@ -1,0 +1,89 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Download Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: https://npm.pkg.github.com/
+          scope: "@anupheaus"
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8.3.1
+      - name: Remove pnpm overrides for CI
+        run: |
+          jq 'del(.pnpm.overrides["@anupheaus/common"], .pnpm.overrides["@anupheaus/react-ui"])' package.json > package.json.tmp && mv package.json.tmp package.json
+      - name: Install Dependencies
+        run: pnpm i --no-frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Tests
+        run: pnpm run test-ci
+      - name: Build
+        run: pnpm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+      - name: Perform Version Bump
+        uses: "phips28/gh-action-bump-version@master"
+        with:
+          commit-message: "CI: bumps version to {{version}} [skip ci]"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pack
+        run: pnpm pack
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: "*.tgz"
+
+  Publish:
+    needs: [Build]
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'Anupheaus'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download Package
+        uses: actions/download-artifact@v4
+        with:
+          name: package
+      - name: Setup Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: https://npm.pkg.github.com/
+          scope: "@anupheaus"
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8.3.1
+      - name: Publish
+        run: |
+          TGZ=$(ls anupheaus-socket-api-*.tgz 2>/dev/null | head -1)
+          if [ -z "$TGZ" ]; then
+            echo "No package tarball found. Contents:"
+            ls -la
+            exit 1
+          fi
+          pnpm publish --no-git-checks "$TGZ"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

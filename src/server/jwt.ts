@@ -51,8 +51,9 @@ function createTokenFromUser(user: SocketAPIUser, providedPrivateKey?: string): 
     }
   })();
 
+  // Fixed: algorithm must match key type - we use RSA keys so RS256 is correct (was ES256 which expects EC keys)
   const token = JWT.sign({ user }, rawPrivateKey, {
-    algorithm: 'ES256',
+    algorithm: 'RS256', // was: algorithm: 'ES256',
     issuer: 'socket-api',
     audience: 'socket-api',
     expiresIn: '3d',

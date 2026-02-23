@@ -1,0 +1,31 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+describe('createServerHandler', () => {
+  const mockHandler = vi.fn(async (req: { id: string }) => ({ result: req.id }));
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('returns a function when handler is registered', async () => {
+    const { createServerHandler } = await import('./createServerHandler');
+    const register = createServerHandler('action', 'test.prefix', 'uniqueAction1', mockHandler);
+    expect(register).toBeInstanceOf(Function);
+  });
+
+  it('throws when same handler is registered twice', async () => {
+    const { createServerHandler } = await import('./createServerHandler');
+    createServerHandler('action', 'test.prefix', 'duplicateAction', mockHandler);
+    expect(() =>
+      createServerHandler('action', 'test.prefix', 'duplicateAction', mockHandler)
+    ).toThrow("Handler for action 'duplicateAction' already registered");
+  });
+
+  it('allows different handler names with same prefix', async () => {
+    const { createServerHandler } = await import('./createServerHandler');
+    const reg1 = createServerHandler('action', 'test.prefix', 'actionOne', mockHandler);
+    const reg2 = createServerHandler('action', 'test.prefix', 'actionTwo', mockHandler);
+    expect(reg1).toBeInstanceOf(Function);
+    expect(reg2).toBeInstanceOf(Function);
+  });
+});
