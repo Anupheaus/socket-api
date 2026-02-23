@@ -8,19 +8,13 @@ on:
 jobs:
   Build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: read
     steps:
       - name: Download Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup Environment
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 19.x
           registry-url: https://npm.pkg.github.com/
           scope: "@anupheaus"
       - name: Setup PNPM
@@ -38,12 +32,8 @@ jobs:
         run: pnpm run test-ci
       - name: Build
         run: pnpm run build
-        env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
       - name: Perform Version Bump
         uses: "phips28/gh-action-bump-version@master"
-        with:
-          commit-message: "CI: bumps version to {{version}} [skip ci]"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Pack
@@ -58,9 +48,6 @@ jobs:
     needs: [Build]
     runs-on: ubuntu-latest
     if: github.repository_owner == 'Anupheaus'
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Download Package
         uses: actions/download-artifact@v4
@@ -69,9 +56,8 @@ jobs:
       - name: Setup Environment
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 19.x
           registry-url: https://npm.pkg.github.com/
-          scope: "@anupheaus"
       - name: Setup PNPM
         uses: pnpm/action-setup@v3
         with:
