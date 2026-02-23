@@ -47,6 +47,9 @@ jobs:
   Publish:
     needs: [Build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: github.repository_owner == 'Anupheaus'
     steps:
       - name: Download Package
@@ -74,4 +77,4 @@ jobs:
           fi
           pnpm publish --no-git-checks "$TGZ"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN || secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
