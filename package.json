@@ -1,6 +1,6 @@
 {
   "name": "@anupheaus/socket-api",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./dist/index.js",
   "exports": {
     "./server": {
@@ -114,9 +114,6 @@
     "webpack-node-externals": "^3.0.0"
   },
   "pnpm": {
-    "overrides": {
-      "@anupheaus/common": "file:../common",
-      "@anupheaus/react-ui": "file:../react-ui"
-    }
+    "overrides": {}
   }
 }
