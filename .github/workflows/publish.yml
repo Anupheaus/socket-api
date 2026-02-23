@@ -66,7 +66,12 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 8.3.1
-      # If publish fails with 403, add NPM_PUBLISH_TOKEN secret (PAT with write:packages)
+      - name: Configure npm for GitHub Packages
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+          echo "@anupheaus:registry=https://npm.pkg.github.com/" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish
         run: |
           TGZ=$(ls anupheaus-socket-api-*.tgz 2>/dev/null | head -1)
@@ -75,6 +80,6 @@ jobs:
             ls -la
             exit 1
           fi
-          pnpm publish --no-git-checks "$TGZ"
+          npm publish "$TGZ" --registry https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
